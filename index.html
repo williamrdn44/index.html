@@ -3,865 +3,707 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>StreamFlix - Seu Centro de Entretenimento</title>
-    <!-- Inclui Tailwind CSS para estilização responsiva e moderna -->
+    <title>Gerador de Filmes para Kodi</title>
+    <!-- Tailwind CSS CDN para estilização rápida e responsiva -->
     <script src="https://cdn.tailwindcss.com"></script>
-    <!-- Define a fonte Inter para todo o site -->
+    <!-- Google Fonts - Inter para uma tipografia moderna e legível -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <style>
+        /* Define a família de fontes para o corpo do documento */
         body {
             font-family: 'Inter', sans-serif;
         }
-        /* Estilos personalizados para o player de vídeo */
-        #videoPlayerContainer video {
-            width: 100%;
-            height: auto;
-            max-height: 80vh; /* Limita a altura do vídeo */
-            border-radius: 0.5rem; /* Bordas arredondadas */
-        }
-        /* Estilos para o iframe embed */
-        #videoPlayerContainer iframe {
-            width: 100%;
-            height: 80vh; /* Altura do iframe para o embed */
-            border-radius: 0.5rem; /* Bordas arredondadas */
-            border: none; /* Remove borda padrão do iframe */
-        }
-        /* Estilos para o scrollbar */
+        /* Estilização personalizada da barra de rolagem para melhor estética */
         ::-webkit-scrollbar {
-            width: 8px;
+            width: 8px; /* Largura da barra de rolagem */
         }
         ::-webkit-scrollbar-track {
-            background: #1a202c; /* Fundo escuro */
+            background: #f1f1f1; /* Cor do fundo da trilha */
+            border-radius: 10px; /* Borda arredondada da trilha */
         }
         ::-webkit-scrollbar-thumb {
-            background: #4a5568; /* Cor da barra de rolagem */
-            border-radius: 4px;
+            background: #888; /* Cor do "polegar" da barra de rolagem */
+            border-radius: 10px; /* Borda arredondada do "polegar" */
         }
         ::-webkit-scrollbar-thumb:hover {
-            background: #6b7280; /* Cor ao passar o mouse */
+            background: #555; /* Cor do "polegar" ao passar o mouse */
+        }
+        /* Estilo para limitar o texto a 3 linhas */
+        .line-clamp-3 {
+            display: -webkit-box;
+            -webkit-box-orient: vertical;
+            -webkit-line-clamp: 3;
+            overflow: hidden;
         }
     </style>
 </head>
-<body class="bg-gray-900 text-gray-100 min-h-screen flex flex-col">
+<body class="bg-gradient-to-br from-blue-900 to-purple-900 min-h-screen text-gray-100 flex items-center justify-center p-4">
+    <div class="container mx-auto bg-gray-800 p-8 rounded-xl shadow-2xl w-full max-w-4xl">
+        <h1 class="text-4xl font-bold text-center mb-8 text-blue-300">Gerador de Filmes para Kodi</h1>
 
-    <!-- Tela de Login -->
-    <div id="loginScreen" class="flex items-center justify-center min-h-screen">
-        <div class="bg-gray-800 p-8 rounded-lg shadow-xl w-full max-w-sm border border-gray-700">
-            <h2 class="text-3xl font-bold mb-6 text-center text-red-500">StreamFlix</h2>
-            <form id="loginForm">
-                <div class="mb-4">
-                    <label for="username" class="block text-gray-300 text-sm font-bold mb-2">Usuário:</label>
-                    <input type="text" id="username" name="username" class="shadow appearance-none border border-gray-700 rounded w-full py-2 px-3 bg-gray-700 text-gray-100 leading-tight focus:outline-none focus:shadow-outline focus:border-red-500" placeholder="admin" required>
-                </div>
-                <div class="mb-6">
-                    <label for="password" class="block text-gray-300 text-sm font-bold mb-2">Senha:</label>
-                    <input type="password" id="password" name="password" class="shadow appearance-none border border-gray-700 rounded w-full py-2 px-3 bg-gray-700 text-gray-100 leading-tight focus:outline-none focus:shadow-outline focus:border-red-500" placeholder="admin" required>
-                </div>
-                <div class="flex items-center justify-between">
-                    <button type="submit" class="bg-red-600 hover:bg-red-700 text-white font-bold py-2 px-4 rounded-md focus:outline-none focus:shadow-outline w-full transform hover:scale-105 transition-transform duration-200 ease-in-out">Entrar</button>
-                </div>
-                <p id="loginMessage" class="text-center text-red-400 text-sm mt-4 hidden"></p>
-            </form>
-        </div>
-    </div>
-
-    <!-- Conteúdo Principal do Site (Escondido até o login) -->
-    <div id="mainContent" class="hidden flex-1 flex flex-col">
-        <!-- Cabeçalho -->
-        <header class="bg-gray-800 p-4 shadow-md flex items-center justify-between">
-            <h1 class="text-4xl font-extrabold text-red-500 mr-auto">StreamFlix</h1>
-            <div class="relative">
-                <button id="userMenuButton" class="flex items-center space-x-2 text-gray-300 hover:text-white focus:outline-none">
-                    <img src="https://placehold.co/40x40/FF0000/FFFFFF?text=U" alt="User Avatar" class="rounded-full border-2 border-gray-600">
-                    <span class="hidden md:inline-block">Olá, Usuário!</span>
-                    <svg class="w-4 h-4 ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
+        <!-- Seção de Busca de Filmes -->
+        <div class="mb-8 p-6 bg-gray-700 rounded-lg shadow-inner">
+            <h2 class="text-2xl font-semibold mb-4 text-blue-200">1. Buscar Filmes</h2>
+            <div class="flex flex-col sm:flex-row gap-4 mb-4">
+                <input type="text" id="movieSearchInput" placeholder="Digite o título do filme..." class="flex-grow p-3 rounded-lg bg-gray-600 border border-gray-500 focus:ring-2 focus:ring-blue-500 focus:border-transparent text-white placeholder-gray-300">
+                <button id="searchMovieButton" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-6 rounded-lg shadow-md transition duration-300 ease-in-out transform hover:scale-105 flex items-center justify-center">
+                    <!-- Ícone de busca SVG -->
+                    <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
+                    Buscar Filme
                 </button>
-                <div id="userMenu" class="absolute right-0 mt-2 w-48 bg-gray-700 rounded-md shadow-lg py-1 hidden z-10">
-                    <a href="#" id="openControlPanel" class="block px-4 py-2 text-sm text-gray-200 hover:bg-gray-600">Painel de Controle</a>
-                    <a href="#" id="logoutButton" class="block px-4 py-2 text-sm text-gray-200 hover:bg-gray-600">Sair</a>
+            </div>
+            <!-- Área para exibir os resultados da busca -->
+            <div id="searchResults" class="space-y-3 max-h-60 overflow-y-auto pr-2">
+                <!-- Resultados da busca aparecerão aqui dinamicamente -->
+            </div>
+            <!-- Mensagem de status da busca (ex: "Buscando...", "Nenhum encontrado") -->
+            <p id="searchMessage" class="text-sm text-gray-400 mt-4 text-center hidden">Aguardando busca...</p>
+        </div>
+
+        <!-- Seção de Filmes Adicionados -->
+        <div class="mb-8 p-6 bg-gray-700 rounded-lg shadow-inner">
+            <h2 class="text-2xl font-semibold mb-4 text-blue-200">2. Filmes Adicionados</h2>
+            <div id="addedMoviesContainer" class="space-y-6">
+                <!-- Mensagem exibida quando não há filmes adicionados -->
+                <p id="noMoviesMessage" class="text-center text-gray-400">Nenhum filme adicionado ainda.</p>
+                <!-- Filmes adicionados aparecerão aqui dinamicamente -->
+            </div>
+        </div>
+
+        <!-- Seção de Saída Gerada -->
+        <div class="p-6 bg-gray-700 rounded-lg shadow-inner">
+            <h2 class="text-2xl font-semibold mb-4 text-blue-200">3. Conteúdo Gerado para Kodi</h2>
+
+            <!-- Opção de seleção da estrutura de saída (will, BXL ou allan) -->
+            <div class="mb-4">
+                <label class="text-gray-300 text-sm mb-2 block">Selecione a Estrutura de Saída (para Links Magnet):</label>
+                <div class="flex flex-wrap gap-4">
+                    <label class="inline-flex items-center">
+                        <input type="radio" class="form-radio text-purple-600 output-structure-radio" name="outputStructure" value="will" checked>
+                        <span class="ml-2 text-white">Estrutura 'will' (Padrão)</span>
+                    </label>
+                    <label class="inline-flex items-center">
+                        <input type="radio" class="form-radio text-blue-600 output-structure-radio" name="outputStructure" value="BXL">
+                        <span class="ml-2 text-white">Estrutura 'BXL' (Personalizada)</span>
+                    </label>
+                    <label class="inline-flex items-center">
+                        <input type="radio" class="form-radio text-green-600 output-structure-radio" name="outputStructure" value="allan">
+                        <span class="ml-2 text-white">Estrutura 'allan'</span>
+                    </label>
                 </div>
             </div>
-            <p id="currentUserId" class="text-sm text-gray-400 ml-4 hidden md:block">ID de Usuário: </p>
-        </header>
 
-        <!-- Seção de Destaque (Hero) -->
-        <section class="relative h-96 bg-cover bg-center" style="background-image: url('https://placehold.co/1200x500/000000/FFFFFF?text=Filme+Destaque');">
-            <div class="absolute inset-0 bg-gradient-to-t from-gray-900 via-transparent to-transparent"></div>
-            <div class="absolute bottom-0 left-0 p-8">
-                <h2 class="text-5xl font-bold text-white drop-shadow-lg mb-4">Título do Filme em Destaque</h2>
-                <p class="text-xl text-gray-200 max-w-lg mb-6">Uma breve descrição cativante do filme em destaque. Prepare-se para uma experiência inesquecível!</p>
-                <button class="bg-red-600 hover:bg-red-700 text-white font-bold py-3 px-6 rounded-md text-lg transform hover:scale-105 transition-transform duration-200 ease-in-out">Assistir Agora</button>
-            </div>
-        </section>
-
-        <!-- Seção de Filmes -->
-        <section class="p-8 flex-1 overflow-auto" id="movieSection">
-            <h2 class="text-3xl font-bold mb-6 text-gray-200">Filmes Populares</h2>
-            <div id="moviesContainer" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-6">
-                <!-- Filmes serão carregados aqui pelo JavaScript -->
-            </div>
-            <p id="noMoviesMessage" class="text-center text-gray-400 text-lg mt-8 hidden">Nenhum filme cadastrado ainda. Adicione alguns no Painel de Controle!</p>
-        </section>
-    </div>
-
-    <!-- Painel de Controle (Modal) -->
-    <div id="controlPanelModal" class="fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center hidden z-50">
-        <div class="bg-gray-800 p-8 rounded-lg shadow-xl w-full max-w-3xl border border-gray-700 max-h-[90vh] overflow-y-auto">
-            <div class="flex justify-between items-center mb-6">
-                <h2 class="text-3xl font-bold text-gray-100">Painel de Controle</h2>
-                <button id="closeControlPanel" class="text-gray-400 hover:text-white text-3xl font-bold">&times;</button>
-            </div>
-
-            <!-- Formulário para Adicionar Filme -->
-            <form id="addMovieForm" class="mb-8 p-6 bg-gray-700 rounded-md">
-                <h3 class="text-2xl font-bold mb-4 text-gray-100">Adicionar Novo Filme</h3>
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <!-- TMDB Search -->
-                    <div class="md:col-span-2 relative">
-                        <label for="tmdbSearch" class="block text-gray-300 text-sm font-bold mb-2">Buscar Filme no TMDB:</label>
-                        <div class="flex">
-                            <input type="text" id="tmdbSearch" class="shadow appearance-none border border-gray-600 rounded-l w-full py-2 px-3 bg-gray-600 text-gray-100 leading-tight focus:outline-none focus:shadow-outline focus:border-red-500" placeholder="Ex: Vingadores Ultimato">
-                            <button type="button" id="searchTmdbButton" class="bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-2 px-4 rounded-r-md focus:outline-none focus:shadow-outline">Buscar</button>
-                        </div>
-                        <div id="tmdbSearchResults" class="absolute bg-gray-700 border border-gray-600 rounded-md mt-1 w-full z-20 hidden max-h-60 overflow-y-auto">
-                            <!-- Resultados da busca TMDB serão inseridos aqui -->
-                        </div>
-                    </div>
-
-                    <div>
-                        <label for="movieTitle" class="block text-gray-300 text-sm font-bold mb-2">Título:</label>
-                        <input type="text" id="movieTitle" class="shadow appearance-none border border-gray-600 rounded w-full py-2 px-3 bg-gray-600 text-gray-100 leading-tight focus:outline-none focus:shadow-outline focus:border-red-500" required>
-                    </div>
-                    <div>
-                        <label for="movieDescription" class="block text-gray-300 text-sm font-bold mb-2">Descrição:</label>
-                        <textarea id="movieDescription" class="shadow appearance-none border border-gray-600 rounded w-full py-2 px-3 bg-gray-600 text-gray-100 leading-tight focus:outline-none focus:shadow-outline focus:border-red-500" rows="3" required></textarea>
-                    </div>
-                    <div>
-                        <label for="movieImage" class="block text-gray-300 text-sm font-bold mb-2">URL da Imagem (Poster):</label>
-                        <input type="url" id="movieImage" class="shadow appearance-none border border-gray-600 rounded w-full py-2 px-3 bg-gray-600 text-gray-100 leading-tight focus:outline-none focus:shadow-outline focus:border-red-500" placeholder="https://image.tmdb.org/t/p/w500/..." required>
-                    </div>
-
-                    <!-- Tipo de Link e Link do Conteúdo -->
-                    <div>
-                        <label for="linkType" class="block text-gray-300 text-sm font-bold mb-2">Tipo de Link:</label>
-                        <select id="linkType" class="shadow appearance-none border border-gray-600 rounded w-full py-2 px-3 bg-gray-600 text-gray-100 leading-tight focus:outline-none focus:shadow-outline focus:border-red-500">
-                            <option value="direct">Link Direto (MP4, MKV)</option>
-                            <option value="embed">Link Embed (Google Drive, Vimeo, etc.)</option>
-                            <option value="magnet">Link Magnet</option>
-                        </select>
-                    </div>
-                    <div class="md:col-span-2">
-                        <label for="contentLink" class="block text-gray-300 text-sm font-bold mb-2">Link do Conteúdo:</label>
-                        <input type="url" id="contentLink" class="shadow appearance-none border border-gray-600 rounded w-full py-2 px-3 bg-gray-600 text-gray-100 leading-tight focus:outline-none focus:shadow-outline focus:border-red-500" required>
-                        <p class="text-xs text-gray-400 mt-1">
-                            Para links Embed (Google Drive, OneDrive, etc.), certifique-se de usar o link de incorporação (iframe) fornecido pelo serviço.
-                            Ex: Google Drive (compartilhe o vídeo publicamente e pegue o embed link), Vimeo, YouTube.
-                        </p>
-                    </div>
-                </div>
-                <div class="flex justify-end mt-6">
-                    <button type="submit" class="bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-4 rounded-md focus:outline-none focus:shadow-outline transform hover:scale-105 transition-transform duration-200 ease-in-out">Adicionar Filme</button>
-                </div>
-            </form>
-
-            <!-- Lista de Filmes Cadastrados -->
-            <div>
-                <h3 class="text-2xl font-bold mb-4 text-gray-100">Filmes Cadastrados</h3>
-                <div id="registeredMoviesList" class="space-y-4">
-                    <!-- Filmes serão listados aqui -->
-                </div>
-                <p id="noRegisteredMoviesMessage" class="text-center text-gray-400 text-lg mt-8 hidden">Nenhum filme cadastrado ainda.</p>
-            </div>
+            <!-- Área de texto para exibir o conteúdo gerado -->
+            <textarea id="generatedOutput" rows="15" class="w-full p-4 rounded-lg bg-gray-900 border border-gray-700 text-white text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 resize-y" placeholder="O conteúdo gerado para o Kodi aparecerá aqui."></textarea>
+            <button id="copyOutputButton" class="mt-4 bg-green-600 hover:bg-green-700 text-white font-bold py-3 px-6 rounded-lg shadow-md transition duration-300 ease-in-out transform hover:scale-105 w-full flex items-center justify-center">
+                <!-- Ícone de copiar SVG -->
+                <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2m-4 0V3a1 1 0 00-1-1H9a1 1 0 00-1 1v2m-1 5l3 3m0 0l3-3m-3 3V10"></path></svg>
+                Copiar Texto Gerado
+            </button>
         </div>
     </div>
 
-    <!-- Modal de Detalhes do Filme / Player de Vídeo -->
-    <div id="movieDetailsModal" class="fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center hidden z-40">
-        <div class="bg-gray-800 p-8 rounded-lg shadow-xl w-full max-w-4xl border border-gray-700 relative">
-            <button id="closeMovieDetailsModal" class="absolute top-4 right-4 text-gray-400 hover:text-white text-3xl font-bold">&times;</button>
-            <div id="movieDetailsContent" class="flex flex-col md:flex-row gap-6">
-                <!-- Conteúdo do filme e player aqui -->
-            </div>
-            <div id="videoPlayerContainer" class="mt-6 hidden">
-                <!-- O player será injetado aqui (video ou iframe) -->
-            </div>
-        </div>
-    </div>
+    <script>
+        // Define as constantes para acesso à API do TMDB
+        const TMDB_API_KEY = '6d0edef9aa6ad31de0b398ac01a89d4d'; // Chave da API do TMDB fornecida
+        const BASE_TMDB_URL = 'https://api.themoviedb.org/3'; // URL base para a API do TMDB
+        const BASE_POSTER_URL = 'https://image.tmdb.org/t/p/w500'; // URL base para imagens de pôsteres (tamanho 500px de largura)
 
-    <!-- Modal de Mensagem (para substituir alert/confirm) -->
-    <div id="messageModal" class="fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center hidden z-50">
-        <div class="bg-gray-800 p-6 rounded-lg shadow-xl w-full max-w-sm border border-gray-700">
-            <h3 id="messageTitle" class="text-xl font-bold mb-4 text-gray-100"></h3>
-            <p id="messageText" class="text-gray-300 mb-6"></p>
-            <div class="flex justify-end space-x-4">
-                <button id="messageConfirmButton" class="bg-red-600 hover:bg-red-700 text-white font-bold py-2 px-4 rounded-md focus:outline-none focus:shadow-outline hidden">Confirmar</button>
-                <button id="messageCancelButton" class="bg-gray-600 hover:bg-gray-700 text-white font-bold py-2 px-4 rounded-md focus:outline-none focus:shadow-outline">OK</button>
-            </div>
-        </div>
-    </div>
+        // Array para armazenar os filmes que foram adicionados pelo usuário
+        let addedMovies = [];
+        // Variável global para controlar a estrutura de saída
+        let currentOutputStructure = 'will'; // Padrão: 'will' (Links Magnet)
 
-
-    <script type="module">
-        // Importações do Firebase
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
-        import { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-        import { getFirestore, collection, doc, addDoc, setDoc, updateDoc, deleteDoc, onSnapshot, query } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
-
-        // Variáveis de elementos DOM
-        const loginScreen = document.getElementById('loginScreen');
-        const loginForm = document.getElementById('loginForm');
-        const loginMessage = document.getElementById('loginMessage');
-        const mainContent = document.getElementById('mainContent');
-        const userMenuButton = document.getElementById('userMenuButton');
-        const userMenu = document.getElementById('userMenu');
-        const openControlPanelButton = document.getElementById('openControlPanel');
-        const logoutButton = document.getElementById('logoutButton');
-        const controlPanelModal = document.getElementById('controlPanelModal');
-        const closeControlPanelButton = document.getElementById('closeControlPanel');
-        const addMovieForm = document.getElementById('addMovieForm');
-        const moviesContainer = document.getElementById('moviesContainer');
-        const registeredMoviesList = document.getElementById('registeredMoviesList');
-        const movieDetailsModal = document.getElementById('movieDetailsModal');
-        const closeMovieDetailsModalButton = document.getElementById('closeMovieDetailsModal');
-        const movieDetailsContent = document.getElementById('movieDetailsContent');
-        const videoPlayerContainer = document.getElementById('videoPlayerContainer');
+        // Referências aos elementos do DOM para manipulação via JavaScript
+        const movieSearchInput = document.getElementById('movieSearchInput');
+        const searchMovieButton = document.getElementById('searchMovieButton');
+        const searchResultsDiv = document.getElementById('searchResults');
+        const addedMoviesContainer = document.getElementById('addedMoviesContainer');
+        const generatedOutputTextarea = document.getElementById('generatedOutput');
+        const copyOutputButton = document.getElementById('copyOutputButton');
         const noMoviesMessage = document.getElementById('noMoviesMessage');
-        const noRegisteredMoviesMessage = document.getElementById('noRegisteredMoviesMessage');
-        const currentUserIdDisplay = document.getElementById('currentUserId');
-
-
-        // Novas variáveis para TMDB e Link Type
-        const tmdbSearchInput = document.getElementById('tmdbSearch');
-        const searchTmdbButton = document.getElementById('searchTmdbButton');
-        const tmdbSearchResults = document.getElementById('tmdbSearchResults');
-        const movieTitleInput = document.getElementById('movieTitle');
-        const movieDescriptionInput = document.getElementById('movieDescription');
-        const movieImageInput = document.getElementById('movieImage');
-        const linkTypeSelect = document.getElementById('linkType');
-        const contentLinkInput = document.getElementById('contentLink');
-
-
-        // Variáveis do Modal de Mensagem
-        const messageModal = document.getElementById('messageModal');
-        const messageTitle = document.getElementById('messageTitle');
-        const messageText = document.getElementById('messageText');
-        const messageConfirmButton = document.getElementById('messageConfirmButton');
-        const messageCancelButton = document.getElementById('messageCancelButton');
-
-        // Usuário padrão para login (para fins de demonstração)
-        const ADMIN_USERNAME = 'admin';
-        const ADMIN_PASSWORD = 'admin';
-
-        // TMDB API Key
-        const TMDB_API_KEY = '6d0edef9aa6ad31de0b398ac01a89d4d';
-        const TMDB_BASE_URL = 'https://api.themoviedb.org/3';
-        const TMDB_IMAGE_BASE_URL = 'https://image.tmdb.org/t/p/w500';
-
-        // Variáveis Firebase
-        let app;
-        let db;
-        let auth;
-        let currentUserId = 'anonymous'; // Inicializa com um valor padrão
-        let movies = []; // Variável para armazenar a lista de filmes do Firestore
-        let currentFocusedMovieIndex = -1; // Índice do filme atualmente focado para navegação por teclado
+        const searchMessage = document.getElementById('searchMessage');
 
         /**
-         * Exibe um modal de mensagem personalizado.
-         * @param {string} title - O título da mensagem.
-         * @param {string} message - O corpo da mensagem.
-         * @param {boolean} isConfirm - Se é um modal de confirmação (true) ou apenas informativo (false).
-         * @returns {Promise<boolean>} Retorna uma Promise que resolve para true se confirmado, false se cancelado ou apenas OK.
+         * Realiza uma busca de filmes na API do TMDB com base em um título.
+         * Exibe os resultados da busca na interface do usuário.
+         * Se o TMDB não encontrar resultados, oferece links para Google e IMDb.
+         * @param {string} query - O título do filme a ser buscado.
          */
-        function showMessageModal(title, message, isConfirm = false) {
-            return new Promise((resolve) => {
-                messageTitle.textContent = title;
-                messageText.textContent = message;
-
-                if (isConfirm) {
-                    messageConfirmButton.classList.remove('hidden');
-                    messageConfirmButton.onclick = () => {
-                        messageModal.classList.add('hidden');
-                        resolve(true);
-                    };
-                    messageCancelButton.textContent = 'Cancelar';
-                    messageCancelButton.onclick = () => {
-                        messageModal.classList.add('hidden');
-                        resolve(false);
-                    };
-                } else {
-                    messageConfirmButton.classList.add('hidden');
-                    messageCancelButton.textContent = 'OK';
-                    messageCancelButton.onclick = () => {
-                        messageModal.classList.add('hidden');
-                        resolve(false); // Sempre false para um modal informativo
-                    };
-                }
-                messageModal.classList.remove('hidden');
-            });
-        }
-
-        /**
-         * Configura os listeners do Firestore para os filmes.
-         */
-        function setupFirestoreListeners() {
-            if (!db || !currentUserId) {
-                console.error("Firestore ou User ID não estão prontos para configurar listeners.");
+        async function searchMovies(query) {
+            // Se a query estiver vazia, limpa os resultados e exibe uma mensagem
+            if (!query) {
+                searchResultsDiv.innerHTML = '';
+                searchMessage.textContent = 'Por favor, digite um título para buscar.';
+                searchMessage.classList.remove('hidden');
                 return;
             }
 
-            // Path para a coleção de filmes privados do usuário
-            const moviesCollectionRef = collection(db, `artifacts/${__app_id}/users/${currentUserId}/movies`);
-            const q = query(moviesCollectionRef);
+            searchResultsDiv.innerHTML = ''; // Limpa quaisquer resultados de busca anteriores
+            searchMessage.textContent = 'Buscando filmes no TMDB...'; // Exibe uma mensagem de carregamento
+            searchMessage.classList.remove('hidden'); // Garante que a mensagem esteja visível
 
-            // onSnapshot para receber atualizações em tempo real
-            onSnapshot(q, (snapshot) => {
-                const updatedMovies = [];
-                snapshot.forEach(doc => {
-                    updatedMovies.push({ id: doc.id, ...doc.data() });
+            try {
+                // Faz a requisição à API do TMDB para buscar filmes
+                const response = await fetch(`${BASE_TMDB_URL}/search/movie?api_key=${TMDB_API_KEY}&query=${encodeURIComponent(query)}&language=pt-BR`);
+                if (!response.ok) {
+                    throw new Error(`Erro na busca: ${response.statusText}`);
+                }
+                const data = await response.json(); // Converte a resposta para JSON
+
+                // Se nenhum resultado for encontrado no TMDB, sugere Google/IMDb
+                if (data.results.length === 0) {
+                    searchMessage.innerHTML = `
+                        Nenhum filme encontrado no TMDB para a sua busca. Você pode tentar:
+                        <br>
+                        <a href="https://www.google.com/search?q=${encodeURIComponent(query)}%20filme" target="_blank" class="text-blue-400 hover:underline mt-2 inline-block">Buscar no Google por "${query}"</a>
+                        <br>
+                        <a href="https://www.imdb.com/find/?q=${encodeURIComponent(query)}&ref_=nv_sr_sm" target="_blank" class="text-blue-400 hover:underline mt-1 inline-block">Buscar no IMDb por "${query}"</a>
+                    `;
+                    searchMessage.classList.remove('hidden');
+                    searchResultsDiv.innerHTML = ''; // Garante que não há resultados antigos do TMDB
+                    return; // Sai da função após sugerir outras buscas
+                }
+
+                searchMessage.classList.add('hidden'); // Oculta a mensagem de busca uma vez que os resultados são carregados
+
+                // Itera sobre os resultados e cria um card para cada filme
+                data.results.forEach(movie => {
+                    const movieCard = document.createElement('div');
+                    movieCard.className = 'flex items-center bg-gray-600 rounded-lg p-3 shadow-md border border-gray-500';
+                    movieCard.innerHTML = `
+                        <img src="${movie.poster_path ? BASE_POSTER_URL + movie.poster_path : 'https://placehold.co/92x138/000000/FFFFFF?text=Sem+Poster'}" alt="${movie.title}" class="w-16 h-24 object-cover rounded-md mr-4 shadow-sm">
+                        <div class="flex-grow">
+                            <h3 class="text-lg font-semibold text-white">${movie.title}</h3>
+                            <p class="text-gray-300 text-sm">${movie.release_date ? movie.release_date.substring(0, 4) : 'Ano Desconhecido'}</p>
+                        </div>
+                        <button class="add-movie-button bg-purple-600 hover:bg-purple-700 text-white font-bold py-2 px-4 rounded-lg shadow-md transition duration-300 ease-in-out transform hover:scale-105" data-movie-id="${movie.id}">
+                            Adicionar
+                        </button>
+                    `;
+                    searchResultsDiv.appendChild(movieCard);
                 });
-                movies = updatedMovies; // Atualiza a lista de filmes global
-                renderMovies(); // Renderiza na tela principal
-                renderRegisteredMovies(); // Renderiza no painel de controle
-                console.log("Filmes atualizados do Firestore:", movies);
-            }, (error) => {
-                console.error("Erro ao obter filmes do Firestore via onSnapshot:", error);
-                showMessageModal('Erro de Sincronização', 'Ocorreu um erro ao carregar os filmes. Por favor, tente recarregar a página.', false);
-            });
+
+                // Adiciona um "listener" de evento para cada botão "Adicionar" recém-criado
+                searchResultsDiv.querySelectorAll('.add-movie-button').forEach(button => {
+                    button.addEventListener('click', (event) => {
+                        const movieId = event.target.dataset.movieId; // Obtém o ID do filme do atributo de dados
+                        addMovie(movieId); // Chama a função para adicionar o filme
+                        searchResultsDiv.innerHTML = ''; // Limpa os resultados da busca após adicionar um filme
+                        movieSearchInput.value = ''; // Limpa o campo de input da busca
+                        searchMessage.classList.add('hidden'); // Oculta a mensagem de busca
+                    });
+                });
+
+            } catch (error) {
+                // Captura e exibe erros que ocorrem durante a busca no TMDB
+                console.error('Erro ao buscar filmes no TMDB:', error);
+                searchMessage.textContent = `Erro ao buscar filmes no TMDB: ${error.message}`;
+                searchMessage.classList.remove('hidden');
+            }
         }
 
         /**
-         * Renderiza os filmes na tela principal.
+         * Adiciona um filme à lista de "filmes adicionados".
+         * Busca detalhes completos do filme no TMDB antes de adicionar.
+         * @param {string} movieId - O ID do filme no TMDB.
          */
-        function renderMovies() {
-            moviesContainer.innerHTML = ''; // Limpa o container
-            if (movies.length === 0) {
-                noMoviesMessage.classList.remove('hidden');
+        async function addMovie(movieId) {
+            // Converte o movieId para número para garantir a comparação correta
+            const numericMovieId = parseInt(movieId);
+            // Verifica se o filme já foi adicionado para evitar duplicatas
+            if (addedMovies.some(movie => movie.id === numericMovieId)) {
+                showMessage('Este filme já foi adicionado!', 'bg-yellow-500');
                 return;
+            }
+
+            try {
+                // Faz a requisição para obter os detalhes completos de um filme pelo ID
+                const response = await fetch(`${BASE_TMDB_URL}/movie/${numericMovieId}?api_key=${TMDB_API_KEY}&language=pt-BR`);
+                if (!response.ok) {
+                    throw new Error(`Erro ao buscar detalhes do filme: ${response.statusText}`);
+                }
+                const data = await response.json(); // Converte a resposta para JSON
+
+                // Cria um objeto de filme com os dados relevantes
+                const movie = {
+                    id: data.id, // O ID do TMDB já é um número
+                    title: data.title,
+                    year: data.release_date ? data.release_date.substring(0, 4) : 'Ano Desconhecido',
+                    overview: data.overview || 'Sinopse não disponível.', // Fallback para sinopse
+                    poster_path: data.poster_path,
+                    magnet_links: [''], // Inicializa com um array contendo um link magnet vazio para ser preenchido pelo usuário
+                    direct_links: [''], // Adicionado novamente: Inicializa com um array contendo um link direto vazio
+                    primaryTitleColor: 'silver', // Nova propriedade para a cor do título principal, padrão 'silver'
+                    secondaryTitleColor: 'yellow', // Nova propriedade para a cor do título secundária, padrão 'yellow'
+                    hdcamType: 'none' // Novo: 'none', 'leg', 'pt'
+                };
+                addedMovies.push(movie); // Adiciona o filme ao array de filmes adicionados
+                renderAddedMovies(); // Atualiza a renderização da lista de filmes adicionados
+                generateOutput(); // Atualiza o texto de saída gerado
+                showMessage('Filme adicionado com sucesso!', 'bg-green-500'); // Exibe uma mensagem de sucesso
+
+            } catch (error) {
+                // Captura e exibe erros ao adicionar o filme
+                console.error('Erro ao adicionar filme:', error);
+                showMessage(`Erro ao adicionar filme: ${error.message}`, 'bg-red-500');
+            }
+        }
+
+        /**
+         * Remove um filme da lista de filmes adicionados.
+         * @param {string} movieId - O ID do filme a ser removido.
+         */
+        function removeMovie(movieId) {
+            // Converte o movieId para número para garantir a comparação correta
+            const numericMovieId = parseInt(movieId);
+            // Filtra o array `addedMovies`, removendo o filme com o ID correspondente
+            addedMovies = addedMovies.filter(movie => movie.id !== numericMovieId);
+            renderAddedMovies(); // Atualiza a renderização da lista
+            generateOutput(); // Atualiza o texto de saída
+            showMessage('Filme removido.', 'bg-gray-500'); // Exibe uma mensagem de remoção
+        }
+
+        /**
+         * Adiciona um novo campo de link magnet para um filme específico.
+         * @param {string} movieId - O ID do filme ao qual adicionar o link.
+         */
+        function addMagnetLink(movieId) {
+            // Converte o movieId para número para garantir a comparação correta
+            const numericMovieId = parseInt(movieId);
+            const movie = addedMovies.find(m => m.id === numericMovieId);
+            if (movie) {
+                movie.magnet_links.push(''); // Adiciona um novo link vazio ao array
+                renderAddedMovies(); // Re-renderiza para mostrar o novo campo de input
+                generateOutput(); // Atualiza a saída
+            }
+        }
+
+        /**
+         * Remove um link magnet específico de um filme.
+         * @param {string} movieId - O ID do filme do qual remover o link.
+         * @param {number} linkIndex - O índice do link a ser removido no array.
+         */
+        function removeMagnetLink(movieId, linkIndex) {
+            // Converte o movieId para número para garantir a comparação correta
+            const numericMovieId = parseInt(movieId);
+            const movie = addedMovies.find(m => m.id === numericMovieId);
+            if (movie) {
+                if (movie.magnet_links.length > 1) {
+                    movie.magnet_links.splice(linkIndex, 1); // Remove o link pelo índice
+                    showMessage('Link magnet removido.', 'bg-gray-500');
+                } else if (movie.magnet_links.length === 1) {
+                    movie.magnet_links[0] = ''; // Limpa o conteúdo do último link
+                    showMessage('Último link magnet esvaziado.', 'bg-yellow-500');
+                }
+                renderAddedMovies(); // Re-renderiza
+                generateOutput(); // Atualiza a saída
+            }
+        }
+
+        /**
+         * Adiciona um novo campo de link direto para um filme específico.
+         * @param {string} movieId - O ID do filme ao qual adicionar o link.
+         */
+        function addDirectLink(movieId) {
+            const numericMovieId = parseInt(movieId);
+            const movie = addedMovies.find(m => m.id === numericMovieId);
+            if (movie) {
+                movie.direct_links.push(''); // Adiciona um novo link vazio ao array
+                renderAddedMovies(); // Re-renderiza para mostrar o novo campo de input
+                generateOutput(); // Atualiza a saída
+            }
+        }
+
+        /**
+         * Remove um link direto específico de um filme.
+         * @param {string} movieId - O ID do filme do qual remover o link.
+         * @param {number} linkIndex - O índice do link a ser removido no array.
+         */
+        function removeDirectLink(movieId, linkIndex) {
+            const numericMovieId = parseInt(movieId);
+            const movie = addedMovies.find(m => m.id === numericMovieId);
+            if (movie) {
+                if (movie.direct_links.length > 1) {
+                    movie.direct_links.splice(linkIndex, 1); // Remove o link pelo índice
+                    showMessage('Link direto removido.', 'bg-gray-500');
+                } else if (movie.direct_links.length === 1) {
+                    movie.direct_links[0] = ''; // Limpa o conteúdo do último link
+                    showMessage('Último link direto esvaziado.', 'bg-yellow-500');
+                }
+                renderAddedMovies(); // Re-renderiza
+                generateOutput(); // Atualiza a saída
+            }
+        }
+
+
+        /**
+         * Renderiza (desenha) a lista de filmes adicionados na interface do usuário.
+         */
+        function renderAddedMovies() {
+            addedMoviesContainer.innerHTML = ''; // Limpa o container de filmes adicionados antes de renderizar novamente
+
+            // Mostra ou esconde a mensagem "Nenhum filme adicionado ainda"
+            if (addedMovies.length === 0) {
+                noMoviesMessage.classList.remove('hidden');
             } else {
                 noMoviesMessage.classList.add('hidden');
             }
 
-            movies.forEach((movie, index) => {
+            // Itera sobre cada filme no array `addedMovies` e cria o HTML correspondente
+            addedMovies.forEach(movie => {
                 const movieCard = document.createElement('div');
-                movieCard.classList.add('bg-gray-800', 'rounded-lg', 'shadow-lg', 'overflow-hidden', 'cursor-pointer', 'relative', 'group', 'transform', 'hover:scale-105', 'transition-transform', 'duration-200', 'ease-in-out', 'focus:outline-none', 'focus:ring-4', 'focus:ring-red-500', 'focus:ring-opacity-75');
-                movieCard.setAttribute('tabindex', '0'); // Torna o elemento focável
-                movieCard.dataset.index = index; // Adiciona o índice para navegação por teclado
-                movieCard.dataset.movieId = movie.id; // Armazena o ID do Firestore
+                movieCard.className = 'flex flex-col sm:flex-row items-start sm:items-center bg-gray-600 rounded-lg p-4 shadow-md border border-gray-500 relative';
 
+                // Conteúdo principal do card do filme
                 movieCard.innerHTML = `
-                    <img src="${movie.image}" alt="${movie.title}" class="w-full h-56 object-cover">
-                    <div class="p-4">
-                        <h3 class="text-xl font-semibold mb-2 text-gray-100 truncate">${movie.title}</h3>
-                        <p class="text-gray-400 text-sm line-clamp-2">${movie.description}</p>
+                    <img src="${movie.poster_path ? BASE_POSTER_URL + movie.poster_path : 'https://placehold.co/92x138/000000/FFFFFF?text=Sem+Poster'}" alt="${movie.title}" class="w-24 h-36 object-cover rounded-md mr-4 mb-4 sm:mb-0 shadow-sm flex-shrink-0">
+                    <div class="flex-grow">
+                        <h3 class="text-xl font-semibold text-white mb-1">${movie.title} <span class="text-gray-300 text-sm">(${movie.year})</span></h3>
+                        <p class="text-gray-300 text-sm mb-3 line-clamp-3">${movie.overview}</p>
+                        
+                        <div class="flex items-center gap-2 mb-3">
+                            <label for="primaryTitleColor-${movie.id}" class="text-gray-300 text-sm flex-shrink-0">Cor Título Principal:</label>
+                            <input type="text" id="primaryTitleColor-${movie.id}" class="primary-title-color-input flex-grow p-2 rounded-lg bg-gray-700 border border-gray-500 focus:ring-1 focus:ring-blue-500 text-white text-sm" placeholder="Ex: silver" value="${movie.primaryTitleColor || 'silver'}" data-movie-id="${movie.id}">
+                        </div>
+                        <div class="flex items-center gap-2 mb-3">
+                            <label for="secondaryTitleColor-${movie.id}" class="text-gray-300 text-sm flex-shrink-0">Cor Título Secundário:</label>
+                            <input type="text" id="secondaryTitleColor-${movie.id}" class="secondary-title-color-input flex-grow p-2 rounded-lg bg-gray-700 border border-gray-500 focus:ring-1 focus:ring-blue-500 text-white text-sm" placeholder="Ex: yellow" value="${movie.secondaryTitleColor || 'yellow'}" data-movie-id="${movie.id}">
+                        </div>
+
+                        <!-- Dropdown para tipo de HDCAM, agora sempre visível -->
+                        <div class="flex items-center gap-2 mb-4">
+                            <label for="hdcamType-${movie.id}" class="text-gray-300 text-sm flex-shrink-0">Tipo de HDCAM:</label>
+                            <select id="hdcamType-${movie.id}" class="hdcam-type-select flex-grow p-2 rounded-lg bg-gray-700 border border-gray-500 focus:ring-1 focus:ring-green-500 text-white text-sm" data-movie-id="${movie.id}">
+                                <option value="none" ${movie.hdcamType === 'none' ? 'selected' : ''}>Nenhum</option>
+                                <option value="leg" ${movie.hdcamType === 'leg' ? 'selected' : ''}>HDCAM LEG.</option>
+                                <option value="pt" ${movie.hdcamType === 'pt' ? 'selected' : ''}>HDCAM PT.</option>
+                            </select>
+                        </div>
+
+                        <div class="magnet-links-section space-y-2 mb-4">
+                            <label class="text-gray-300 text-sm">Links Magnet:</label>
+                            <div class="magnet-inputs-container space-y-2">
+                                <!-- Links magnet serão inseridos aqui dinamicamente -->
+                            </div>
+                            <button class="add-magnet-link-button bg-purple-700 hover:bg-purple-800 text-white font-bold py-2 px-4 rounded-lg shadow-md transition duration-300 ease-in-out transform hover:scale-105 text-sm" data-movie-id="${movie.id}">
+                                Adicionar Link Magnet
+                            </button>
+                        </div>
+
+                        <div class="direct-links-section space-y-2 mb-4">
+                            <label class="text-gray-300 text-sm">Links Diretos (HTTP/HTTPS):</label>
+                            <div class="direct-inputs-container space-y-2">
+                                <!-- Links diretos serão inseridos aqui dinamicamente -->
+                            </div>
+                            <button class="add-direct-link-button bg-blue-700 hover:bg-blue-800 text-white font-bold py-2 px-4 rounded-lg shadow-md transition duration-300 ease-in-out transform hover:scale-105 text-sm" data-movie-id="${movie.id}">
+                                Adicionar Link Direto
+                            </button>
+                        </div>
                     </div>
-                    <div class="absolute inset-0 bg-black bg-opacity-70 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-200">
-                        <svg class="w-16 h-16 text-white" fill="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                            <path d="M8 5v14l11-7z"></path>
-                        </svg>
-                    </div>
+                    <!-- Botão de remover filme -->
+                    <button class="remove-movie-button absolute top-3 right-3 bg-red-600 hover:bg-red-700 text-white p-2 rounded-full shadow-md transition duration-300 ease-in-out transform hover:scale-110" data-movie-id="${movie.id}" title="Remover Filme">
+                        <!-- Ícone de remover SVG -->
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+                    </button>
                 `;
-                movieCard.addEventListener('click', () => showMovieDetails(movie, index));
-                movieCard.addEventListener('focus', () => {
-                    currentFocusedMovieIndex = index;
-                    movieCard.classList.add('ring-4', 'ring-red-500', 'ring-opacity-75');
-                });
-                movieCard.addEventListener('blur', () => {
-                    movieCard.classList.remove('ring-4', 'ring-red-500', 'ring-opacity-75');
-                });
-                moviesContainer.appendChild(movieCard);
-            });
-        }
+                addedMoviesContainer.appendChild(movieCard);
 
-        /**
-         * Renderiza a lista de filmes no painel de controle.
-         */
-        function renderRegisteredMovies() {
-            registeredMoviesList.innerHTML = '';
-            if (movies.length === 0) {
-                noRegisteredMoviesMessage.classList.remove('hidden');
-                return;
-            } else {
-                noRegisteredMoviesMessage.classList.add('hidden');
-            }
-
-            movies.forEach((movie, index) => {
-                const movieItem = document.createElement('div');
-                movieItem.classList.add('bg-gray-600', 'p-4', 'rounded-md', 'flex', 'items-center', 'justify-between', 'space-x-4');
-                movieItem.innerHTML = `
-                    <div class="flex-1">
-                        <h4 class="text-xl font-semibold text-gray-100">${movie.title}</h4>
-                        <p class="text-gray-300 text-sm truncate">${movie.description}</p>
-                    </div>
-                    <button class="edit-movie-button bg-blue-600 hover:bg-blue-700 text-white text-sm font-bold py-1 px-3 rounded-md transform hover:scale-105 transition-transform duration-200 ease-in-out" data-id="${movie.id}" data-index="${index}">Editar</button>
-                    <button class="delete-movie-button bg-red-600 hover:bg-red-700 text-white text-sm font-bold py-1 px-3 rounded-md transform hover:scale-105 transition-transform duration-200 ease-in-out" data-id="${movie.id}" data-index="${index}">Excluir</button>
-                `;
-                registeredMoviesList.appendChild(movieItem);
-            });
-
-            // Adiciona listeners para os botões de edição e exclusão
-            document.querySelectorAll('.edit-movie-button').forEach(button => {
-                button.addEventListener('click', (e) => {
-                    const movieId = e.target.dataset.id;
-                    const movieIndex = parseInt(e.target.dataset.index);
-                    editMovie(movies[movieIndex], movieId);
-                });
-            });
-            document.querySelectorAll('.delete-movie-button').forEach(button => {
-                button.addEventListener('click', async (e) => {
-                    const movieId = e.target.dataset.id;
-                    const movieIndex = parseInt(e.target.dataset.index);
-                    const movieTitleToDelete = movies[movieIndex].title;
-                    const confirmed = await showMessageModal('Confirmação', `Tem certeza que deseja excluir "${movieTitleToDelete}"?`, true);
-                    if (confirmed) {
-                        deleteMovie(movieId);
-                    }
-                });
-            });
-        }
-
-        /**
-         * Exibe o modal de detalhes do filme e o player.
-         * @param {object} movie - O objeto filme.
-         * @param {number} index - O índice do filme.
-         */
-        function showMovieDetails(movie, index) {
-            movieDetailsContent.innerHTML = `
-                <div class="md:w-1/3">
-                    <img src="${movie.image}" alt="${movie.title}" class="w-full h-auto rounded-lg shadow-lg">
-                </div>
-                <div class="md:w-2/3">
-                    <h3 class="text-4xl font-bold text-gray-100 mb-4">${movie.title}</h3>
-                    <p class="text-gray-300 text-lg mb-6">${movie.description}</p>
-                    <div class="flex space-x-4">
-                        <button id="playMovieButton" class="bg-red-600 hover:bg-red-700 text-white font-bold py-3 px-6 rounded-md text-lg flex items-center transform hover:scale-105 transition-transform duration-200 ease-in-out">
-                            <svg class="w-6 h-6 mr-2" fill="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                                <path d="M8 5v14l11-7z"></path>
-                            </svg>
-                            Assistir
+                // Adiciona os inputs de link magnet dinamicamente
+                const magnetInputsContainer = movieCard.querySelector('.magnet-inputs-container');
+                movie.magnet_links.forEach((link, index) => {
+                    const linkDiv = document.createElement('div');
+                    linkDiv.className = 'flex items-center gap-2';
+                    linkDiv.innerHTML = `
+                        <input type="text" class="magnet-link-input flex-grow p-2 rounded-lg bg-gray-700 border border-gray-500 focus:ring-1 focus:ring-blue-500 text-white text-sm" placeholder="Cole o link magnet aqui (ex: magnet:?xt=...$nome=[COLOR lime]Nome[/COLOR])..." value="${link || ''}" data-movie-id="${movie.id}" data-link-index="${index}">
+                        <button class="remove-single-magnet-button bg-red-500 hover:bg-red-600 text-white p-2 rounded-lg shadow-md transition duration-300 ease-in-out transform hover:scale-105" data-movie-id="${movie.id}" data-link-index="${index}" title="Remover este link">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
                         </button>
-                    </div>
-                </div>
-            `;
+                    `;
+                    magnetInputsContainer.appendChild(linkDiv);
+                });
 
-            videoPlayerContainer.innerHTML = ''; // Limpa o container do player
-            videoPlayerContainer.classList.add('hidden'); // Esconde o container do player
-
-            document.getElementById('playMovieButton').addEventListener('click', () => {
-                movieDetailsContent.classList.add('hidden');
-                videoPlayerContainer.classList.remove('hidden');
-
-                if (movie.linkType === 'direct') {
-                    const videoElement = document.createElement('video');
-                    videoElement.id = 'videoPlayer';
-                    videoElement.controls = true;
-                    videoElement.classList.add('w-full', 'h-auto', 'rounded-lg');
-                    videoElement.src = movie.contentLink;
-                    videoElement.load();
-                    videoElement.play();
-                    videoPlayerContainer.appendChild(videoElement);
-                } else if (movie.linkType === 'embed') {
-                    const iframeElement = document.createElement('iframe');
-                    iframeElement.id = 'videoEmbedPlayer';
-                    iframeElement.setAttribute('src', movie.contentLink);
-                    iframeElement.setAttribute('allowfullscreen', '');
-                    iframeElement.classList.add('w-full', 'h-full', 'rounded-lg');
-                    videoPlayerContainer.appendChild(iframeElement);
-                } else if (movie.linkType === 'magnet') {
-                    showMessageModal('Abrir Link Magnet', 'Você será redirecionado para o link magnet. Certifique-se de ter um cliente BitTorrent instalado.', false);
-                    window.open(movie.contentLink, '_blank');
-                    movieDetailsModal.classList.add('hidden'); // Fecha o modal após abrir o link magnet
-                }
+                // Adiciona os inputs de link direto dinamicamente
+                const directInputsContainer = movieCard.querySelector('.direct-inputs-container');
+                movie.direct_links.forEach((link, index) => {
+                    const linkDiv = document.createElement('div');
+                    linkDiv.className = 'flex items-center gap-2';
+                    linkDiv.innerHTML = `
+                        <input type="text" class="direct-link-input flex-grow p-2 rounded-lg bg-gray-700 border border-gray-500 focus:ring-1 focus:ring-blue-500 text-white text-sm" placeholder="Cole o link direto aqui (http/https)..." value="${link || ''}" data-movie-id="${movie.id}" data-link-index="${index}">
+                        <button class="remove-single-direct-button bg-red-500 hover:bg-red-600 text-white p-2 rounded-lg shadow-md transition duration-300 ease-in-out transform hover:scale-105" data-movie-id="${movie.id}" data-link-index="${index}" title="Remover este link">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+                        </button>
+                    `;
+                    directInputsContainer.appendChild(linkDiv);
+                });
             });
 
-            movieDetailsModal.classList.remove('hidden');
-            movieDetailsModal.focus(); // Foca no modal para permitir navegação por teclado (se aplicável dentro do modal)
-            currentFocusedMovieIndex = index; // Atualiza o índice do filme focado
-        }
-
-        /**
-         * Adiciona ou edita um filme no Firestore.
-         * @param {Event} e - Evento de submit do formulário.
-         */
-        addMovieForm.addEventListener('submit', async (e) => {
-            e.preventDefault();
-            const title = movieTitleInput.value;
-            const description = movieDescriptionInput.value;
-            let image = movieImageInput.value;
-            const linkType = linkTypeSelect.value;
-            const contentLink = contentLinkInput.value;
-
-            // Fallback para imagem placeholder se a URL da imagem estiver vazia
-            if (!image) {
-                image = `https://placehold.co/300x450/000000/FFFFFF?text=${encodeURIComponent(title)}`;
-            }
-
-            const movieData = { title, description, image, linkType, contentLink };
-
-            try {
-                const editingId = addMovieForm.dataset.editingId;
-                if (editingId !== undefined && editingId !== '') {
-                    // Modo de edição
-                    const movieDocRef = doc(db, `artifacts/${__app_id}/users/${currentUserId}/movies`, editingId);
-                    await updateDoc(movieDocRef, movieData);
-                    showMessageModal('Sucesso', 'Filme atualizado com sucesso!', false);
-                    delete addMovieForm.dataset.editingId; // Limpa o estado de edição
-                } else {
-                    // Modo de adição
-                    const moviesCollectionRef = collection(db, `artifacts/${__app_id}/users/${currentUserId}/movies`);
-                    await addDoc(moviesCollectionRef, movieData);
-                    showMessageModal('Sucesso', 'Filme adicionado com sucesso!', false);
-                }
-            } catch (error) {
-                console.error("Erro ao salvar filme no Firestore:", error);
-                showMessageModal('Erro', 'Ocorreu um erro ao salvar o filme. Por favor, tente novamente.', false);
-            }
-
-            addMovieForm.reset(); // Limpa o formulário
-            tmdbSearchResults.classList.add('hidden'); // Esconde resultados do TMDB
-            document.querySelector('#addMovieForm button[type="submit"]').textContent = 'Adicionar Filme'; // Reseta o texto do botão
-        });
-
-        /**
-         * Preenche o formulário para edição de um filme.
-         * @param {object} movie - O objeto filme (com o ID do Firestore).
-         * @param {string} movieId - O ID do documento no Firestore.
-         */
-        function editMovie(movie, movieId) {
-            movieTitleInput.value = movie.title;
-            movieDescriptionInput.value = movie.description;
-            movieImageInput.value = movie.image;
-            linkTypeSelect.value = movie.linkType;
-            contentLinkInput.value = movie.contentLink;
-            addMovieForm.dataset.editingId = movieId; // Armazena o ID do filme que está sendo editado
-            document.querySelector('#addMovieForm button[type="submit"]').textContent = 'Salvar Alterações';
-            controlPanelModal.scrollTo({ top: 0, behavior: 'smooth' }); // Rola para o topo do formulário
-            tmdbSearchResults.classList.add('hidden'); // Esconde resultados do TMDB
-        }
-
-        /**
-         * Exclui um filme do Firestore.
-         * @param {string} movieId - ID do documento do filme no Firestore.
-         */
-        async function deleteMovie(movieId) {
-            try {
-                const movieDocRef = doc(db, `artifacts/${__app_id}/users/${currentUserId}/movies`, movieId);
-                await deleteDoc(movieDocRef);
-                showMessageModal('Sucesso', 'Filme excluído com sucesso!', false);
-            } catch (error) {
-                console.error("Erro ao excluir filme do Firestore:", error);
-                showMessageModal('Erro', 'Ocorreu um erro ao excluir o filme. Por favor, tente novamente.', false);
-            }
-        }
-
-        // --- Lógica de Login ---
-        loginForm.addEventListener('submit', (e) => {
-            e.preventDefault();
-            const username = document.getElementById('username').value;
-            const password = document.getElementById('password').value;
-
-            if (username === ADMIN_USERNAME && password === ADMIN_PASSWORD) {
-                localStorage.setItem('isAuthenticated', 'true');
-                loginScreen.classList.add('hidden');
-                mainContent.classList.remove('hidden');
-                // Como os filmes são carregados via onSnapshot, não precisamos chamar renderMovies aqui.
-                // Eles serão carregados quando o Firebase for inicializado e o user ID for definido.
-                // Foca no primeiro filme após o login para navegação por teclado
-                setTimeout(() => {
-                    if (moviesContainer.children.length > 0) {
-                        moviesContainer.children[0].focus();
+            // Adiciona "listeners" de evento para os inputs de link magnet
+            addedMoviesContainer.querySelectorAll('.magnet-link-input').forEach(input => {
+                input.addEventListener('input', (event) => {
+                    const movieId = event.target.dataset.movieId;
+                    const linkIndex = parseInt(event.target.dataset.linkIndex);
+                    const newMagnetLink = event.target.value;
+                    const movie = addedMovies.find(m => m.id === parseInt(movieId));
+                    if (movie && movie.magnet_links[linkIndex] !== undefined) {
+                        movie.magnet_links[linkIndex] = newMagnetLink;
+                        generateOutput(); // Regenera a saída sempre que um link magnet é atualizado
                     }
-                }, 100);
-            } else {
-                loginMessage.textContent = 'Usuário ou senha inválidos.';
-                loginMessage.classList.remove('hidden');
-            }
-        });
+                });
+            });
 
-        // --- Lógica do Menu de Usuário ---
-        userMenuButton.addEventListener('click', () => {
-            userMenu.classList.toggle('hidden');
-        });
+            // Adiciona "listeners" de evento para os inputs de link direto
+            addedMoviesContainer.querySelectorAll('.direct-link-input').forEach(input => {
+                input.addEventListener('input', (event) => {
+                    const movieId = event.target.dataset.movieId;
+                    const linkIndex = parseInt(event.target.dataset.linkIndex);
+                    const newDirectLink = event.target.value;
+                    const movie = addedMovies.find(m => m.id === parseInt(movieId));
+                    if (movie && movie.direct_links[linkIndex] !== undefined) {
+                        movie.direct_links[linkIndex] = newDirectLink;
+                        generateOutput(); // Regenera a saída sempre que um link direto é atualizado
+                    }
+                });
+            });
 
-        // Fecha o menu se clicar fora
-        document.addEventListener('click', (e) => {
-            if (!userMenuButton.contains(e.target) && !userMenu.contains(e.target)) {
-                userMenu.classList.add('hidden');
-            }
-        });
+            // Adiciona "listeners" de evento para os inputs de cor do título principal
+            addedMoviesContainer.querySelectorAll('.primary-title-color-input').forEach(input => {
+                input.addEventListener('input', (event) => {
+                    const movieId = event.target.dataset.movieId;
+                    const newColor = event.target.value.trim();
+                    const movie = addedMovies.find(m => m.id === parseInt(movieId));
+                    if (movie) {
+                        movie.primaryTitleColor = newColor;
+                        generateOutput(); // Regenera a saída sempre que a cor do título é atualizada
+                    }
+                });
+            });
 
-        logoutButton.addEventListener('click', async () => {
-            const confirmed = await showMessageModal('Confirmação', 'Tem certeza que deseja sair?', true);
-            if (confirmed) {
-                localStorage.removeItem('isAuthenticated');
-                loginScreen.classList.remove('hidden');
-                mainContent.classList.add('hidden');
-                userMenu.classList.add('hidden'); // Fecha o menu
-                loginMessage.classList.add('hidden'); // Esconde mensagem de erro do login
-                loginForm.reset(); // Limpa o formulário de login
-            }
-        });
+            // Adiciona "listeners" de evento para os inputs de cor do título secundário
+            addedMoviesContainer.querySelectorAll('.secondary-title-color-input').forEach(input => {
+                input.addEventListener('input', (event) => {
+                    const movieId = event.target.dataset.movieId;
+                    const newColor = event.target.value.trim();
+                    const movie = addedMovies.find(m => m.id === parseInt(movieId));
+                    if (movie) {
+                        movie.secondaryTitleColor = newColor;
+                        generateOutput(); // Regenera a saída sempre que a cor do título é atualizada
+                    }
+                });
+            });
 
-        // --- Lógica do Painel de Controle ---
-        openControlPanelButton.addEventListener('click', () => {
-            controlPanelModal.classList.remove('hidden');
-            renderRegisteredMovies(); // Garante que a lista esteja atualizada ao abrir
-            document.querySelector('#addMovieForm button[type="submit"]').textContent = 'Adicionar Filme'; // Reseta o texto do botão
-            delete addMovieForm.dataset.editingId; // Garante que não está em modo de edição ao abrir
-            addMovieForm.reset(); // Limpa o formulário ao abrir
-            tmdbSearchResults.classList.add('hidden'); // Esconde resultados do TMDB
-        });
+            // Adiciona "listeners" de evento para o select de tipo de HDCAM
+            addedMoviesContainer.querySelectorAll('.hdcam-type-select').forEach(select => {
+                select.addEventListener('change', (event) => {
+                    const movieId = event.target.dataset.movieId;
+                    const newHdcamType = event.target.value;
+                    const movie = addedMovies.find(m => m.id === parseInt(movieId));
+                    if (movie) {
+                        movie.hdcamType = newHdcamType;
+                        generateOutput(); // Regenera a saída quando o tipo de HDCAM muda
+                    }
+                });
+            });
 
-        closeControlPanelButton.addEventListener('click', () => {
-            controlPanelModal.classList.add('hidden');
-        });
+            // Adiciona "listeners" de evento para os botões "Adicionar Link Magnet"
+            addedMoviesContainer.querySelectorAll('.add-magnet-link-button').forEach(button => {
+                button.addEventListener('click', (event) => {
+                    const movieId = event.currentTarget.dataset.movieId;
+                    addMagnetLink(movieId);
+                });
+            });
 
-        // --- Lógica do Modal de Detalhes do Filme / Player ---
-        closeMovieDetailsModalButton.addEventListener('click', () => {
-            movieDetailsModal.classList.add('hidden');
-            // Pausa e limpa o player (se for vídeo) ou remove o iframe (se for embed)
-            const currentPlayer = videoPlayerContainer.querySelector('video, iframe');
-            if (currentPlayer && currentPlayer.tagName === 'VIDEO') {
-                currentPlayer.pause();
-                currentPlayer.src = '';
-            }
-            videoPlayerContainer.innerHTML = ''; // Remove qualquer elemento de player
-            videoPlayerContainer.classList.add('hidden'); // Esconde o container do player
+            // Adiciona "listeners" de evento para os botões "Remover este link" (magnet)
+            addedMoviesContainer.querySelectorAll('.remove-single-magnet-button').forEach(button => {
+                button.addEventListener('click', (event) => {
+                    const movieId = event.currentTarget.dataset.movieId;
+                    const linkIndex = parseInt(event.currentTarget.dataset.linkIndex);
+                    removeMagnetLink(movieId, linkIndex);
+                });
+            });
 
-            // Retorna o foco para o card do filme que foi clicado, se existir
-            if (currentFocusedMovieIndex !== -1 && moviesContainer.children[currentFocusedMovieIndex]) {
-                moviesContainer.children[currentFocusedMovieIndex].focus();
-            }
-        });
+            // Adiciona "listeners" de evento para os botões "Adicionar Link Direto"
+            addedMoviesContainer.querySelectorAll('.add-direct-link-button').forEach(button => {
+                button.addEventListener('click', (event) => {
+                    const movieId = event.currentTarget.dataset.movieId;
+                    addDirectLink(movieId);
+                });
+            });
 
-        // --- Navegação por Setas e Janelas Flutuantes ---
-        document.addEventListener('keydown', (e) => {
-            // Verifica se o foco está dentro de um input ou textarea para não interferir na digitação
-            if (document.activeElement.tagName === 'INPUT' || document.activeElement.tagName === 'TEXTAREA') {
+            // Adiciona "listeners" de evento para os botões "Remover este link" (direto)
+            addedMoviesContainer.querySelectorAll('.remove-single-direct-button').forEach(button => {
+                button.addEventListener('click', (event) => {
+                    const movieId = event.currentTarget.dataset.movieId;
+                    const linkIndex = parseInt(event.currentTarget.dataset.linkIndex);
+                    removeDirectLink(movieId, linkIndex);
+                });
+            });
+
+            // Adiciona "listeners" de evento para os botões "Remover Filme" (o grande 'X')
+            addedMoviesContainer.querySelectorAll('.remove-movie-button').forEach(button => {
+                button.addEventListener('click', (event) => {
+                    const movieId = event.currentTarget.dataset.movieId;
+                    removeMovie(movieId); // Chama a função para remover o filme
+                });
+            });
+        }
+
+        /**
+         * Gera o texto formatado com as informações dos filmes e links (magnet e/ou diretos)
+         * para ser copiado e utilizado com o Kodi, baseado na estrutura selecionada para os links magnet.
+         */
+        function generateOutput() {
+            let output = '';
+            // Se não houver filmes adicionados, exibe uma mensagem padrão
+            if (addedMovies.length === 0) {
+                generatedOutputTextarea.value = 'Adicione filmes para gerar o conteúdo para Kodi.';
                 return;
             }
 
-            if (mainContent.classList.contains('hidden') || (!movieDetailsModal.classList.contains('hidden') && videoPlayerContainer.classList.contains('hidden')) || !controlPanelModal.classList.contains('hidden')) {
-                // Permite navegação por teclado na tela principal apenas se nenhum modal estiver ativo
-                // Ou se o modal de detalhes estiver aberto mas o player não
-                // Ou se o painel de controle estiver aberto (para navegar dentro dele, se implementado)
-                // A navegação de setas é primariamente para os cards de filmes.
-                if (controlPanelModal.classList.contains('hidden') && movieDetailsModal.classList.contains('hidden')) {
-                    const movieCards = Array.from(moviesContainer.children);
-                    if (movieCards.length === 0) return;
+            addedMovies.forEach(movie => {
+                const movieTitle = movie.title;
+                const movieYear = movie.year;
+                let overview = movie.overview || 'Sinopse não disponível.';
+                const posterUrl = movie.poster_path ? BASE_POSTER_URL + movie.poster_path : 'https://placehold.co/92x138/000000/FFFFFF?text=Sem+Poster';
+                const primaryColor = movie.primaryTitleColor || 'silver';
+                const secondaryColor = movie.secondaryTitleColor || 'yellow';
 
-                    let nextIndex = currentFocusedMovieIndex;
-                    const numCols = Math.floor(moviesContainer.offsetWidth / (movieCards[0].offsetWidth + (parseFloat(getComputedStyle(moviesContainer).gap) || 0))); // Calcula número de colunas dinamicamente
-
-                    switch (e.key) {
-                        case 'ArrowRight':
-                            e.preventDefault(); // Impede o scroll da página
-                            nextIndex = (currentFocusedMovieIndex + 1) % movieCards.length;
-                            break;
-                        case 'ArrowLeft':
-                            e.preventDefault();
-                            nextIndex = (currentFocusedMovieIndex - 1 + movieCards.length) % movieCards.length;
-                            break;
-                        case 'ArrowDown':
-                            e.preventDefault();
-                            if (numCols > 0) {
-                                nextIndex = (currentFocusedMovieIndex + numCols);
-                                if (nextIndex >= movieCards.length) {
-                                     // Se ultrapassar o final, tenta ir para o último item da linha seguinte ou para o último item total
-                                    const lastRowStart = Math.floor((movieCards.length - 1) / numCols) * numCols;
-                                    nextIndex = Math.min(movieCards.length -1, lastRowStart + (currentFocusedMovieIndex % numCols));
-                                }
-                            } else { // Se não há colunas (mobile), apenas vai para o próximo
-                                nextIndex = (currentFocusedMovieIndex + 1) % movieCards.length;
-                            }
-                            break;
-                        case 'ArrowUp':
-                            e.preventDefault();
-                            if (numCols > 0) {
-                                nextIndex = (currentFocusedMovieIndex - numCols);
-                                if (nextIndex < 0) {
-                                    // Se for para cima do início, tenta ir para o primeiro item da linha anterior ou para o primeiro item total
-                                    const firstRowEnd = numCols -1;
-                                    nextIndex = Math.max(0, firstRowEnd - (numCols - 1 - (currentFocusedMovieIndex % numCols)));
-                                }
-                            } else { // Se não há colunas (mobile), apenas vai para o anterior
-                                nextIndex = (currentFocusedMovieIndex - 1 + movieCards.length) % movieCards.length;
-                            }
-                            break;
-                        case 'Enter':
-                            e.preventDefault();
-                            if (currentFocusedMovieIndex !== -1) {
-                                movieCards[currentFocusedMovieIndex].click(); // Simula o clique para abrir o modal de detalhes
-                            }
-                            break;
-                    }
-
-                    // Garante que o índice está dentro dos limites
-                    nextIndex = Math.max(0, Math.min(nextIndex, movieCards.length - 1));
-
-                    if (nextIndex !== currentFocusedMovieIndex && movieCards[nextIndex]) {
-                        movieCards[nextIndex].focus(); // Move o foco para o próximo filme
-                        currentFocusedMovieIndex = nextIndex;
-                    }
-                }
-            }
-
-            // Lógica de Escape para fechar modais
-            if (e.key === 'Escape') {
-                e.preventDefault();
-                if (!movieDetailsModal.classList.contains('hidden')) {
-                    closeMovieDetailsModalButton.click(); // Fecha o modal de detalhes
-                } else if (!controlPanelModal.classList.contains('hidden')) {
-                    closeControlPanelButton.click(); // Fecha o painel de controle
-                } else if (!messageModal.classList.contains('hidden')) {
-                    messageCancelButton.click(); // Fecha o modal de mensagem
-                }
-            }
-        });
-
-
-        // --- Lógica de Busca TMDB ---
-        searchTmdbButton.addEventListener('click', async () => {
-            const query = tmdbSearchInput.value.trim();
-            if (!query) {
-                showMessageModal('Atenção', 'Por favor, digite um título de filme para buscar no TMDB.', false);
-                return;
-            }
-
-            try {
-                const response = await fetch(`${TMDB_BASE_URL}/search/movie?api_key=${TMDB_API_KEY}&query=${encodeURIComponent(query)}&language=pt-BR`);
-                if (!response.ok) {
-                    throw new Error(`HTTP error! status: ${response.status}`);
-                }
-                const data = await response.json();
-
-                tmdbSearchResults.innerHTML = ''; // Limpa resultados anteriores
-                if (data.results && data.results.length > 0) {
-                    tmdbSearchResults.classList.remove('hidden');
-                    data.results.slice(0, 5).forEach(movie => { // Limita a 5 resultados para não poluir
-                        const resultItem = document.createElement('div');
-                        resultItem.classList.add('p-2', 'cursor-pointer', 'hover:bg-gray-600', 'border-b', 'border-gray-600', 'last:border-b-0');
-                        resultItem.innerHTML = `
-                            <p class="font-semibold">${movie.title} (${movie.release_date ? movie.release_date.substring(0, 4) : 'N/A'})</p>
-                            <p class="text-xs text-gray-400">${movie.overview ? movie.overview.substring(0, 100) + '...' : 'Sem descrição.'}</p>
-                        `;
-                        resultItem.addEventListener('click', () => {
-                            movieTitleInput.value = movie.title;
-                            movieDescriptionInput.value = movie.overview || 'N/A';
-                            movieImageInput.value = movie.poster_path ? `${TMDB_IMAGE_BASE_URL}${movie.poster_path}` : 'https://placehold.co/300x450/000000/FFFFFF?text=Poster+Não+Disponível';
-                            tmdbSearchResults.classList.add('hidden'); // Esconde os resultados
-                        });
-                        tmdbSearchResults.appendChild(resultItem);
-                    });
-                } else {
-                    showMessageModal('Atenção', 'Nenhum resultado encontrado no TMDB para esta busca.', false);
-                    tmdbSearchResults.classList.add('hidden');
-                }
-            } catch (error) {
-                console.error('Erro ao buscar filme no TMDB:', error);
-                showMessageModal('Erro', 'Ocorreu um erro ao buscar o filme no TMDB. Tente novamente mais tarde.', false);
-                tmdbSearchResults.classList.add('hidden');
-            }
-        });
-
-        // Esconde os resultados do TMDB quando clicar fora
-        document.addEventListener('click', (e) => {
-            if (!tmdbSearchResults.contains(e.target) && !tmdbSearchInput.contains(e.target) && !searchTmdbButton.contains(e.target)) {
-                tmdbSearchResults.classList.add('hidden');
-            }
-        });
-
-
-        // --- Inicialização do Firebase e Autenticação ---
-        async function initializeFirebaseAndAuth() {
-            try {
-                // Variáveis globais fornecidas pelo ambiente Canvas
-                const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
-                let firebaseConfig = {};
-
-                // Tenta fazer o parse da configuração do Firebase de forma segura
-                if (typeof __firebase_config !== 'undefined' && __firebase_config) {
-                    try {
-                        firebaseConfig = JSON.parse(__firebase_config);
-                        console.log("Firebase Config carregada:", firebaseConfig);
-                    } catch (e) {
-                        console.error("Erro ao fazer parse de __firebase_config:", e);
-                        showMessageModal('Erro de Configuração', `A configuração do Firebase é inválida: ${e.message}. Verifique a console para detalhes.`, false);
-                        return; // Impede a execução se a configuração for inválida
-                    }
-                } else {
-                    console.warn("Variável __firebase_config não definida ou vazia. Usando configuração padrão.");
+                let hdcamText = '';
+                if (movie.hdcamType === 'leg') {
+                    hdcamText = '( HDCAM LEG. )';
+                } else if (movie.hdcamType === 'pt') {
+                    hdcamText = '( HDCAM PT. )';
                 }
 
-                const initialAuthToken = typeof __initial_auth_token !== 'undefined' ? __initial_auth_token : null;
+                let primaryPlayableLink = ''; // Este será o primeiro link válido para a tag <link> principal
+                let allLinksInfo = []; // Para coletar todos os links para a seção <info>
 
-                // Inicializa o aplicativo Firebase
-                app = initializeApp(firebaseConfig);
-                console.log("Firebase App inicializado com sucesso.");
-
-                db = getFirestore(app);
-                auth = getAuth(app);
-                console.log("Firebase Firestore e Auth serviços inicializados.");
-
-                // Listener para o estado de autenticação
-                onAuthStateChanged(auth, (user) => {
-                    if (user) {
-                        currentUserId = user.uid;
-                        currentUserIdDisplay.textContent = `ID de Usuário: ${currentUserId}`;
-                        currentUserIdDisplay.classList.remove('hidden');
-                        console.log("Usuário autenticado (onAuthStateChanged):", currentUserId);
-                        // Configura os listeners do Firestore apenas após a autenticação
-                        setupFirestoreListeners();
-                        if (localStorage.getItem('isAuthenticated') === 'true') {
-                             mainContent.classList.remove('hidden'); // Exibe o conteúdo principal se já logado
+                // Coleta Links Magnet
+                movie.magnet_links.forEach((link, index) => {
+                    const magnetUri = link.trim();
+                    if (magnetUri) {
+                        if (!primaryPlayableLink) {
+                            primaryPlayableLink = `plugin://plugin.video.elementum/play?uri=${magnetUri}`;
                         }
-                    } else {
-                        currentUserId = 'anonymous'; // Fallback para anônimo se não houver user.uid
-                        currentUserIdDisplay.textContent = `ID de Usuário: ${currentUserId}`;
-                        currentUserIdDisplay.classList.remove('hidden');
-                        console.log("Usuário não autenticado ou anônimo (onAuthStateChanged).");
-                        // Se não há usuário logado e não há token, tenta login anônimo
-                        if (!initialAuthToken) {
-                            signInAnonymously(auth).catch((error) => {
-                                console.error("Erro ao autenticar anonimamente (onAuthStateChanged fallback):", error);
-                                showMessageModal('Erro de Autenticação', 'Não foi possível conectar ao serviço de autenticação. Tente novamente.', false);
-                            });
-                        }
+                        allLinksInfo.push(`[COLOR yellow]Magnet ${index + 1}:[/COLOR] [COLOR lime]${magnetUri}[/COLOR]`);
                     }
                 });
 
-                // Tenta autenticar com o token inicial fornecido pelo ambiente ou anonimamente
-                if (initialAuthToken) {
-                    await signInWithCustomToken(auth, initialAuthToken);
-                    console.log("Autenticado com token customizado (inicial).");
-                } else {
-                    await signInAnonymously(auth);
-                    console.log("Autenticado anonimamente (inicial).");
+                // Coleta Links Diretos
+                movie.direct_links.forEach((link, index) => {
+                    const directUrl = link.trim();
+                    if (directUrl) {
+                        if (!primaryPlayableLink) { // Se nenhum link magnet foi encontrado, usa o primeiro link direto
+                            primaryPlayableLink = directUrl;
+                        }
+                        allLinksInfo.push(`[COLOR yellow]Direto ${index + 1}:[/COLOR] [COLOR lime]${directUrl}[/COLOR]`);
+                    }
+                });
+
+                // Anexa todos os links coletados à sinopse para a tag <info>
+                if (allLinksInfo.length > 0) {
+                    overview += `\n\n[B][COLOR lightblue]Links para Reprodução:[/COLOR][/B]\n`;
+                    overview += allLinksInfo.join('\n');
                 }
 
-            } catch (error) {
-                console.error("Erro fatal na inicialização do Firebase ou autenticação:", error);
-                showMessageModal('Erro de Inicialização', `Erro ao iniciar aplicativo: ${error.message || 'Detalhes desconhecidos'}. Por favor, verifique a console do navegador para mais informações.`, false);
+                // Decide o formato do título baseado na estrutura de saída selecionada
+                let titleContent = '';
+                let genreContent = ''; // Para estruturas BXL e allan
+                let infoContent = overview; // Conteúdo de info padrão
+
+                if (currentOutputStructure === 'will') {
+                    titleContent = `[COLOR ${primaryColor}][B]${movieTitle} (${movieYear})${hdcamText}[/COLOR][/B][COLOR ${secondaryColor}][B][/COLOR][/B]`;
+                } else if (currentOutputStructure === 'BXL') {
+                    const bxlPrimaryColor = 'blue';
+                    const bxlSecondaryColor = 'red';
+                    const bxlGenreColor = 'firebrick';
+                    titleContent = `[B][COLOR ${bxlPrimaryColor}] ${movieTitle} - [COLOR ${bxlSecondaryColor}]ADDON BXL [COLOR ${bxlSecondaryColor}](${movieYear})${hdcamText} Dual Áudio / Dublado 5.1 BluRay 720p | 1080p | 3D | 4K | 2160p [/COLOR][/B]`;
+                    genreContent = `    <genre>[B][COLOR ${bxlGenreColor}] ADDON BXL O profissional dessa área atua no desenvolvimento de softwares e no manejo de estruturas e sistemas informatizados. Tecnologia da Informação.[/COLOR][/B]</genre>\n`;
+                    infoContent = `[B][COLOR ${bxlSecondaryColor}] SINOPSE:${overview}[COLOR ${bxlSecondaryColor}][/COLOR][/B]`;
+                } else if (currentOutputStructure === 'allan') {
+                    const allanPrimaryColor = 'silver';
+                    const allanSecondaryColor = 'yellow';
+                    const allanGenreColor = 'firebrick';
+                    titleContent = `[COLOR ${allanPrimaryColor}][B] ${movieTitle} ${hdcamText} [/COLOR][/B][COLOR ${allanSecondaryColor}] FULL HD [B][/COLOR][/B]`;
+                    genreContent = `    <genre>[B][COLOR ${allanGenreColor}] Coleção de Filmes - O profissional dessa área atua no desenvolvimento de softwares e no manejo de estruturas e sistemas informatizados. Tecnologia da Informação.[/COLOR][/B]</genre>\n`;
+                    infoContent = `[B][COLOR red] SINOPSE:${overview}[COLOR red][/COLOR][/B]`;
+                }
+
+                // Constrói o único bloco <item>
+                if (primaryPlayableLink) { // Somente gera <item> se houver pelo menos um link
+                    output += `<item>\n`;
+                    output += `    <title>${titleContent}</title>\n`;
+                    output += `    <link>${primaryPlayableLink}</link>\n`;
+                    output += `    <thumbnail>${posterUrl}</thumbnail>\n`;
+                    output += genreContent; // Adiciona gênero se aplicável (BXL/allan)
+                    output += `    <fanart>${posterUrl}</fanart>\n`;
+                    output += `    <info><![CDATA[${infoContent}]]></info>\n`;
+                    output += `</item>\n\n`;
+                }
+            });
+            generatedOutputTextarea.value = output.trim();
+        }
+
+        /**
+         * Copia o texto da área de saída gerada para a área de transferência do usuário.
+         */
+        function copyOutput() {
+            // Verifica se há conteúdo para copiar
+            if (generatedOutputTextarea.value.trim() === '' || generatedOutputTextarea.value.trim() === 'Adicione filmes para gerar o conteúdo para Kodi.') {
+                showMessage('Não há conteúdo para copiar.', 'bg-yellow-500');
+                return;
+            }
+            try {
+                generatedOutputTextarea.select(); // Seleciona todo o texto na área de texto
+                document.execCommand('copy'); // Executa o comando de cópia (compatibilidade mais ampla em iframes)
+                showMessage('Conteúdo copiado para a área de transferência!', 'bg-blue-500'); // Mensagem de sucesso
+            } catch (err) {
+                console.error('Erro ao copiar: ', err);
+                showMessage('Falha ao copiar o conteúdo.', 'bg-red-500'); // Mensagem de erro
             }
         }
 
-        // --- Inicialização da Aplicação ---
-        window.onload = () => {
-            initializeFirebaseAndAuth(); // Inicia o Firebase e a autenticação
-            // A visibilidade da tela de login/conteúdo principal será controlada após a autenticação
-            if (localStorage.getItem('isAuthenticated') === 'true') {
-                 loginScreen.classList.add('hidden'); // Esconde login se já autenticado
-            } else {
-                 loginScreen.classList.remove('hidden'); // Mostra login se não autenticado
-            }
-        };
+        /**
+         * Exibe uma mensagem temporária de notificação na tela.
+         * @param {string} message - A mensagem a ser exibida.
+         * @param {string} bgColorClass - Classe de cor de fundo do Tailwind (ex: 'bg-green-500').
+         */
+        function showMessage(message, bgColorClass) {
+            const messageDiv = document.createElement('div');
+            messageDiv.className = `fixed bottom-6 right-6 p-4 rounded-lg shadow-lg text-white font-semibold transition-opacity duration-300 ease-out z-50 ${bgColorClass}`;
+            messageDiv.textContent = message;
+            document.body.appendChild(messageDiv);
 
-        // Redimensionamento para recalcular colunas de navegação
-        window.addEventListener('resize', () => {
-            // Se um item está focado e as colunas mudaram, o foco pode precisar ser ajustado
-            if (currentFocusedMovieIndex !== -1 && moviesContainer.children[currentFocusedMovieIndex]) {
-                moviesContainer.children[currentFocusedMovieIndex].focus();
+            // Remove a mensagem após um período de tempo
+            setTimeout(() => {
+                messageDiv.style.opacity = '0'; // Inicia a transição de opacidade para desaparecer
+                messageDiv.addEventListener('transitionend', () => messageDiv.remove()); // Remove o elemento do DOM após a transição
+            }, 3000); // Mensagem visível por 3 segundos
+        }
+
+        // Adiciona "listeners" de evento para os botões e inputs principais
+        searchMovieButton.addEventListener('click', () => searchMovies(movieSearchInput.value.trim()));
+        movieSearchInput.addEventListener('keypress', (event) => {
+            if (event.key === 'Enter') { // Permite buscar ao pressionar Enter no campo de busca
+                searchMovies(movieSearchInput.value.trim());
             }
         });
+        copyOutputButton.addEventListener('click', copyOutput); // Adiciona listener para o botão de copiar
 
+        // Adiciona "listeners" de evento para os rádios de seleção de estrutura de saída
+        document.querySelectorAll('.output-structure-radio').forEach(radio => {
+            radio.addEventListener('change', (event) => {
+                currentOutputStructure = event.target.value;
+                renderAddedMovies(); // Re-renderiza para mostrar/esconder o select de HDCAM
+                generateOutput(); // Gera a saída com base na nova seleção
+            });
+        });
+
+        // Inicializa a interface quando a página é completamente carregada
+        document.addEventListener('DOMContentLoaded', () => {
+            renderAddedMovies(); // Renderiza qualquer filme que possa estar no estado inicial (vazio aqui)
+            generateOutput(); // Gera a saída inicial (mensagem de "nenhum filme")
+        });
     </script>
 </body>
 </html>
