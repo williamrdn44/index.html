@@ -1,0 +1,769 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>StreamFlix - Seu Centro de Entretenimento</title>
+    <!-- Inclui Tailwind CSS para estilização responsiva e moderna -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Define a fonte Inter para todo o site -->
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+        /* Estilos personalizados para o player de vídeo */
+        #videoPlayerContainer video {
+            width: 100%;
+            height: auto;
+            max-height: 80vh; /* Limita a altura do vídeo */
+            border-radius: 0.5rem; /* Bordas arredondadas */
+        }
+        /* Estilos para o iframe embed */
+        #videoPlayerContainer iframe {
+            width: 100%;
+            height: 80vh; /* Altura do iframe para o embed */
+            border-radius: 0.5rem; /* Bordas arredondadas */
+            border: none; /* Remove borda padrão do iframe */
+        }
+        /* Estilos para o scrollbar */
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #1a202c; /* Fundo escuro */
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #4a5568; /* Cor da barra de rolagem */
+            border-radius: 4px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #6b7280; /* Cor ao passar o mouse */
+        }
+    </style>
+</head>
+<body class="bg-gray-900 text-gray-100 min-h-screen flex flex-col">
+
+    <!-- Tela de Login -->
+    <div id="loginScreen" class="flex items-center justify-center min-h-screen">
+        <div class="bg-gray-800 p-8 rounded-lg shadow-xl w-full max-w-sm border border-gray-700">
+            <h2 class="text-3xl font-bold mb-6 text-center text-red-500">StreamFlix</h2>
+            <form id="loginForm">
+                <div class="mb-4">
+                    <label for="username" class="block text-gray-300 text-sm font-bold mb-2">Usuário:</label>
+                    <input type="text" id="username" name="username" class="shadow appearance-none border border-gray-700 rounded w-full py-2 px-3 bg-gray-700 text-gray-100 leading-tight focus:outline-none focus:shadow-outline focus:border-red-500" placeholder="admin" required>
+                </div>
+                <div class="mb-6">
+                    <label for="password" class="block text-gray-300 text-sm font-bold mb-2">Senha:</label>
+                    <input type="password" id="password" name="password" class="shadow appearance-none border border-gray-700 rounded w-full py-2 px-3 bg-gray-700 text-gray-100 leading-tight focus:outline-none focus:shadow-outline focus:border-red-500" placeholder="admin" required>
+                </div>
+                <div class="flex items-center justify-between">
+                    <button type="submit" class="bg-red-600 hover:bg-red-700 text-white font-bold py-2 px-4 rounded-md focus:outline-none focus:shadow-outline w-full transform hover:scale-105 transition-transform duration-200 ease-in-out">Entrar</button>
+                </div>
+                <p id="loginMessage" class="text-center text-red-400 text-sm mt-4 hidden"></p>
+            </form>
+        </div>
+    </div>
+
+    <!-- Conteúdo Principal do Site (Escondido até o login) -->
+    <div id="mainContent" class="hidden flex-1 flex flex-col">
+        <!-- Cabeçalho -->
+        <header class="bg-gray-800 p-4 shadow-md flex items-center justify-between">
+            <h1 class="text-4xl font-extrabold text-red-500 mr-auto">StreamFlix</h1>
+            <div class="relative">
+                <button id="userMenuButton" class="flex items-center space-x-2 text-gray-300 hover:text-white focus:outline-none">
+                    <img src="https://placehold.co/40x40/FF0000/FFFFFF?text=U" alt="User Avatar" class="rounded-full border-2 border-gray-600">
+                    <span class="hidden md:inline-block">Olá, Usuário!</span>
+                    <svg class="w-4 h-4 ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
+                </button>
+                <div id="userMenu" class="absolute right-0 mt-2 w-48 bg-gray-700 rounded-md shadow-lg py-1 hidden z-10">
+                    <a href="#" id="openControlPanel" class="block px-4 py-2 text-sm text-gray-200 hover:bg-gray-600">Painel de Controle</a>
+                    <a href="#" id="logoutButton" class="block px-4 py-2 text-sm text-gray-200 hover:bg-gray-600">Sair</a>
+                </div>
+            </div>
+        </header>
+
+        <!-- Seção de Destaque (Hero) -->
+        <section class="relative h-96 bg-cover bg-center" style="background-image: url('https://placehold.co/1200x500/000000/FFFFFF?text=Filme+Destaque');">
+            <div class="absolute inset-0 bg-gradient-to-t from-gray-900 via-transparent to-transparent"></div>
+            <div class="absolute bottom-0 left-0 p-8">
+                <h2 class="text-5xl font-bold text-white drop-shadow-lg mb-4">Título do Filme em Destaque</h2>
+                <p class="text-xl text-gray-200 max-w-lg mb-6">Uma breve descrição cativante do filme em destaque. Prepare-se para uma experiência inesquecível!</p>
+                <button class="bg-red-600 hover:bg-red-700 text-white font-bold py-3 px-6 rounded-md text-lg transform hover:scale-105 transition-transform duration-200 ease-in-out">Assistir Agora</button>
+            </div>
+        </section>
+
+        <!-- Seção de Filmes -->
+        <section class="p-8 flex-1 overflow-auto" id="movieSection">
+            <h2 class="text-3xl font-bold mb-6 text-gray-200">Filmes Populares</h2>
+            <div id="moviesContainer" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-6">
+                <!-- Filmes serão carregados aqui pelo JavaScript -->
+            </div>
+            <p id="noMoviesMessage" class="text-center text-gray-400 text-lg mt-8 hidden">Nenhum filme cadastrado ainda. Adicione alguns no Painel de Controle!</p>
+        </section>
+    </div>
+
+    <!-- Painel de Controle (Modal) -->
+    <div id="controlPanelModal" class="fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center hidden z-50">
+        <div class="bg-gray-800 p-8 rounded-lg shadow-xl w-full max-w-3xl border border-gray-700 max-h-[90vh] overflow-y-auto">
+            <div class="flex justify-between items-center mb-6">
+                <h2 class="text-3xl font-bold text-gray-100">Painel de Controle</h2>
+                <button id="closeControlPanel" class="text-gray-400 hover:text-white text-3xl font-bold">&times;</button>
+            </div>
+
+            <!-- Formulário para Adicionar Filme -->
+            <form id="addMovieForm" class="mb-8 p-6 bg-gray-700 rounded-md">
+                <h3 class="text-2xl font-bold mb-4 text-gray-100">Adicionar Novo Filme</h3>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <!-- TMDB Search -->
+                    <div class="md:col-span-2 relative">
+                        <label for="tmdbSearch" class="block text-gray-300 text-sm font-bold mb-2">Buscar Filme no TMDB:</label>
+                        <div class="flex">
+                            <input type="text" id="tmdbSearch" class="shadow appearance-none border border-gray-600 rounded-l w-full py-2 px-3 bg-gray-600 text-gray-100 leading-tight focus:outline-none focus:shadow-outline focus:border-red-500" placeholder="Ex: Vingadores Ultimato">
+                            <button type="button" id="searchTmdbButton" class="bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-2 px-4 rounded-r-md focus:outline-none focus:shadow-outline">Buscar</button>
+                        </div>
+                        <div id="tmdbSearchResults" class="absolute bg-gray-700 border border-gray-600 rounded-md mt-1 w-full z-20 hidden max-h-60 overflow-y-auto">
+                            <!-- Resultados da busca TMDB serão inseridos aqui -->
+                        </div>
+                    </div>
+
+                    <div>
+                        <label for="movieTitle" class="block text-gray-300 text-sm font-bold mb-2">Título:</label>
+                        <input type="text" id="movieTitle" class="shadow appearance-none border border-gray-600 rounded w-full py-2 px-3 bg-gray-600 text-gray-100 leading-tight focus:outline-none focus:shadow-outline focus:border-red-500" required>
+                    </div>
+                    <div>
+                        <label for="movieDescription" class="block text-gray-300 text-sm font-bold mb-2">Descrição:</label>
+                        <textarea id="movieDescription" class="shadow appearance-none border border-gray-600 rounded w-full py-2 px-3 bg-gray-600 text-gray-100 leading-tight focus:outline-none focus:shadow-outline focus:border-red-500" rows="3" required></textarea>
+                    </div>
+                    <div>
+                        <label for="movieImage" class="block text-gray-300 text-sm font-bold mb-2">URL da Imagem (Poster):</label>
+                        <input type="url" id="movieImage" class="shadow appearance-none border border-gray-600 rounded w-full py-2 px-3 bg-gray-600 text-gray-100 leading-tight focus:outline-none focus:shadow-outline focus:border-red-500" placeholder="https://image.tmdb.org/t/p/w500/..." required>
+                    </div>
+
+                    <!-- Tipo de Link e Link do Conteúdo -->
+                    <div>
+                        <label for="linkType" class="block text-gray-300 text-sm font-bold mb-2">Tipo de Link:</label>
+                        <select id="linkType" class="shadow appearance-none border border-gray-600 rounded w-full py-2 px-3 bg-gray-600 text-gray-100 leading-tight focus:outline-none focus:shadow-outline focus:border-red-500">
+                            <option value="direct">Link Direto (MP4, MKV)</option>
+                            <option value="embed">Link Embed (Google Drive, Vimeo, etc.)</option>
+                            <option value="magnet">Link Magnet</option>
+                        </select>
+                    </div>
+                    <div class="md:col-span-2">
+                        <label for="contentLink" class="block text-gray-300 text-sm font-bold mb-2">Link do Conteúdo:</label>
+                        <input type="url" id="contentLink" class="shadow appearance-none border border-gray-600 rounded w-full py-2 px-3 bg-gray-600 text-gray-100 leading-tight focus:outline-none focus:shadow-outline focus:border-red-500" required>
+                        <p class="text-xs text-gray-400 mt-1">
+                            Para links Embed (Google Drive, OneDrive, etc.), certifique-se de usar o link de incorporação (iframe) fornecido pelo serviço.
+                            Ex: Google Drive (compartilhe o vídeo publicamente e pegue o embed link), Vimeo, YouTube.
+                        </p>
+                    </div>
+                </div>
+                <div class="flex justify-end mt-6">
+                    <button type="submit" class="bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-4 rounded-md focus:outline-none focus:shadow-outline transform hover:scale-105 transition-transform duration-200 ease-in-out">Adicionar Filme</button>
+                </div>
+            </form>
+
+            <!-- Lista de Filmes Cadastrados -->
+            <div>
+                <h3 class="text-2xl font-bold mb-4 text-gray-100">Filmes Cadastrados</h3>
+                <div id="registeredMoviesList" class="space-y-4">
+                    <!-- Filmes serão listados aqui -->
+                </div>
+                <p id="noRegisteredMoviesMessage" class="text-center text-gray-400 text-lg mt-8 hidden">Nenhum filme cadastrado ainda.</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal de Detalhes do Filme / Player de Vídeo -->
+    <div id="movieDetailsModal" class="fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center hidden z-40">
+        <div class="bg-gray-800 p-8 rounded-lg shadow-xl w-full max-w-4xl border border-gray-700 relative">
+            <button id="closeMovieDetailsModal" class="absolute top-4 right-4 text-gray-400 hover:text-white text-3xl font-bold">&times;</button>
+            <div id="movieDetailsContent" class="flex flex-col md:flex-row gap-6">
+                <!-- Conteúdo do filme e player aqui -->
+            </div>
+            <div id="videoPlayerContainer" class="mt-6 hidden">
+                <!-- O player será injetado aqui (video ou iframe) -->
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal de Mensagem (para substituir alert/confirm) -->
+    <div id="messageModal" class="fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center hidden z-50">
+        <div class="bg-gray-800 p-6 rounded-lg shadow-xl w-full max-w-sm border border-gray-700">
+            <h3 id="messageTitle" class="text-xl font-bold mb-4 text-gray-100"></h3>
+            <p id="messageText" class="text-gray-300 mb-6"></p>
+            <div class="flex justify-end space-x-4">
+                <button id="messageConfirmButton" class="bg-red-600 hover:bg-red-700 text-white font-bold py-2 px-4 rounded-md focus:outline-none focus:shadow-outline hidden">Confirmar</button>
+                <button id="messageCancelButton" class="bg-gray-600 hover:bg-gray-700 text-white font-bold py-2 px-4 rounded-md focus:outline-none focus:shadow-outline">OK</button>
+            </div>
+        </div>
+    </div>
+
+
+    <script>
+        // Variáveis de elementos DOM
+        const loginScreen = document.getElementById('loginScreen');
+        const loginForm = document.getElementById('loginForm');
+        const loginMessage = document.getElementById('loginMessage');
+        const mainContent = document.getElementById('mainContent');
+        const userMenuButton = document.getElementById('userMenuButton');
+        const userMenu = document.getElementById('userMenu');
+        const openControlPanelButton = document.getElementById('openControlPanel');
+        const logoutButton = document.getElementById('logoutButton');
+        const controlPanelModal = document.getElementById('controlPanelModal');
+        const closeControlPanelButton = document.getElementById('closeControlPanel');
+        const addMovieForm = document.getElementById('addMovieForm');
+        const moviesContainer = document.getElementById('moviesContainer');
+        const registeredMoviesList = document.getElementById('registeredMoviesList');
+        const movieDetailsModal = document.getElementById('movieDetailsModal');
+        const closeMovieDetailsModalButton = document.getElementById('closeMovieDetailsModal');
+        const movieDetailsContent = document.getElementById('movieDetailsContent');
+        const videoPlayerContainer = document.getElementById('videoPlayerContainer');
+        const noMoviesMessage = document.getElementById('noMoviesMessage');
+        const noRegisteredMoviesMessage = document.getElementById('noRegisteredMoviesMessage');
+
+        // Novas variáveis para TMDB e Link Type
+        const tmdbSearchInput = document.getElementById('tmdbSearch');
+        const searchTmdbButton = document.getElementById('searchTmdbButton');
+        const tmdbSearchResults = document.getElementById('tmdbSearchResults');
+        const movieTitleInput = document.getElementById('movieTitle');
+        const movieDescriptionInput = document.getElementById('movieDescription');
+        const movieImageInput = document.getElementById('movieImage');
+        const linkTypeSelect = document.getElementById('linkType');
+        const contentLinkInput = document.getElementById('contentLink');
+
+
+        // Variáveis do Modal de Mensagem
+        const messageModal = document.getElementById('messageModal');
+        const messageTitle = document.getElementById('messageTitle');
+        const messageText = document.getElementById('messageText');
+        const messageConfirmButton = document.getElementById('messageConfirmButton');
+        const messageCancelButton = document.getElementById('messageCancelButton');
+
+        // Usuário padrão para login (para fins de demonstração)
+        const ADMIN_USERNAME = 'admin';
+        const ADMIN_PASSWORD = 'admin';
+
+        // TMDB API Key
+        const TMDB_API_KEY = '6d0edef9aa6ad31de0b398ac01a89d4d';
+        const TMDB_BASE_URL = 'https://api.themoviedb.org/3';
+        const TMDB_IMAGE_BASE_URL = 'https://image.tmdb.org/t/p/w500';
+
+        // Variável para armazenar a lista de filmes
+        let movies = [];
+        let currentFocusedMovieIndex = -1; // Índice do filme atualmente focado para navegação por teclado
+
+        /**
+         * Exibe um modal de mensagem personalizado.
+         * @param {string} title - O título da mensagem.
+         * @param {string} message - O corpo da mensagem.
+         * @param {boolean} isConfirm - Se é um modal de confirmação (true) ou apenas informativo (false).
+         * @returns {Promise<boolean>} Retorna uma Promise que resolve para true se confirmado, false se cancelado ou apenas OK.
+         */
+        function showMessageModal(title, message, isConfirm = false) {
+            return new Promise((resolve) => {
+                messageTitle.textContent = title;
+                messageText.textContent = message;
+
+                if (isConfirm) {
+                    messageConfirmButton.classList.remove('hidden');
+                    messageConfirmButton.onclick = () => {
+                        messageModal.classList.add('hidden');
+                        resolve(true);
+                    };
+                    messageCancelButton.textContent = 'Cancelar';
+                    messageCancelButton.onclick = () => {
+                        messageModal.classList.add('hidden');
+                        resolve(false);
+                    };
+                } else {
+                    messageConfirmButton.classList.add('hidden');
+                    messageCancelButton.textContent = 'OK';
+                    messageCancelButton.onclick = () => {
+                        messageModal.classList.add('hidden');
+                        resolve(false); // Sempre false para um modal informativo
+                    };
+                }
+                messageModal.classList.remove('hidden');
+            });
+        }
+
+        /**
+         * Salva a lista de filmes no localStorage.
+         */
+        function saveMovies() {
+            localStorage.setItem('streamflixMovies', JSON.stringify(movies));
+        }
+
+        /**
+         * Carrega a lista de filmes do localStorage.
+         */
+        function loadMovies() {
+            const storedMovies = localStorage.getItem('streamflixMovies');
+            if (storedMovies) {
+                movies = JSON.parse(storedMovies);
+            }
+        }
+
+        /**
+         * Renderiza os filmes na tela principal.
+         */
+        function renderMovies() {
+            moviesContainer.innerHTML = ''; // Limpa o container
+            if (movies.length === 0) {
+                noMoviesMessage.classList.remove('hidden');
+                return;
+            } else {
+                noMoviesMessage.classList.add('hidden');
+            }
+
+            movies.forEach((movie, index) => {
+                const movieCard = document.createElement('div');
+                movieCard.classList.add('bg-gray-800', 'rounded-lg', 'shadow-lg', 'overflow-hidden', 'cursor-pointer', 'relative', 'group', 'transform', 'hover:scale-105', 'transition-transform', 'duration-200', 'ease-in-out', 'focus:outline-none', 'focus:ring-4', 'focus:ring-red-500', 'focus:ring-opacity-75');
+                movieCard.setAttribute('tabindex', '0'); // Torna o elemento focável
+                movieCard.dataset.index = index; // Adiciona o índice para navegação por teclado
+
+                movieCard.innerHTML = `
+                    <img src="${movie.image}" alt="${movie.title}" class="w-full h-56 object-cover">
+                    <div class="p-4">
+                        <h3 class="text-xl font-semibold mb-2 text-gray-100 truncate">${movie.title}</h3>
+                        <p class="text-gray-400 text-sm line-clamp-2">${movie.description}</p>
+                    </div>
+                    <div class="absolute inset-0 bg-black bg-opacity-70 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-200">
+                        <svg class="w-16 h-16 text-white" fill="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                            <path d="M8 5v14l11-7z"></path>
+                        </svg>
+                    </div>
+                `;
+                movieCard.addEventListener('click', () => showMovieDetails(movie, index));
+                movieCard.addEventListener('focus', () => {
+                    currentFocusedMovieIndex = index;
+                    // Opcional: Adicionar algum destaque visual ao item focado
+                    movieCard.classList.add('ring-4', 'ring-red-500', 'ring-opacity-75');
+                });
+                movieCard.addEventListener('blur', () => {
+                    movieCard.classList.remove('ring-4', 'ring-red-500', 'ring-opacity-75');
+                });
+                moviesContainer.appendChild(movieCard);
+            });
+        }
+
+        /**
+         * Renderiza a lista de filmes no painel de controle.
+         */
+        function renderRegisteredMovies() {
+            registeredMoviesList.innerHTML = '';
+            if (movies.length === 0) {
+                noRegisteredMoviesMessage.classList.remove('hidden');
+                return;
+            } else {
+                noRegisteredMoviesMessage.classList.add('hidden');
+            }
+
+            movies.forEach((movie, index) => {
+                const movieItem = document.createElement('div');
+                movieItem.classList.add('bg-gray-600', 'p-4', 'rounded-md', 'flex', 'items-center', 'justify-between', 'space-x-4');
+                movieItem.innerHTML = `
+                    <div class="flex-1">
+                        <h4 class="text-xl font-semibold text-gray-100">${movie.title}</h4>
+                        <p class="text-gray-300 text-sm truncate">${movie.description}</p>
+                    </div>
+                    <button class="edit-movie-button bg-blue-600 hover:bg-blue-700 text-white text-sm font-bold py-1 px-3 rounded-md transform hover:scale-105 transition-transform duration-200 ease-in-out" data-index="${index}">Editar</button>
+                    <button class="delete-movie-button bg-red-600 hover:bg-red-700 text-white text-sm font-bold py-1 px-3 rounded-md transform hover:scale-105 transition-transform duration-200 ease-in-out" data-index="${index}">Excluir</button>
+                `;
+                registeredMoviesList.appendChild(movieItem);
+            });
+
+            // Adiciona listeners para os botões de edição e exclusão
+            document.querySelectorAll('.edit-movie-button').forEach(button => {
+                button.addEventListener('click', (e) => {
+                    const index = parseInt(e.target.dataset.index);
+                    editMovie(index);
+                });
+            });
+            document.querySelectorAll('.delete-movie-button').forEach(button => {
+                button.addEventListener('click', async (e) => {
+                    const index = parseInt(e.target.dataset.index);
+                    const movieTitleToDelete = movies[index].title;
+                    const confirmed = await showMessageModal('Confirmação', `Tem certeza que deseja excluir "${movieTitleToDelete}"?`, true);
+                    if (confirmed) {
+                        deleteMovie(index);
+                    }
+                });
+            });
+        }
+
+        /**
+         * Exibe o modal de detalhes do filme e o player.
+         * @param {object} movie - O objeto filme.
+         * @param {number} index - O índice do filme.
+         */
+        function showMovieDetails(movie, index) {
+            movieDetailsContent.innerHTML = `
+                <div class="md:w-1/3">
+                    <img src="${movie.image}" alt="${movie.title}" class="w-full h-auto rounded-lg shadow-lg">
+                </div>
+                <div class="md:w-2/3">
+                    <h3 class="text-4xl font-bold text-gray-100 mb-4">${movie.title}</h3>
+                    <p class="text-gray-300 text-lg mb-6">${movie.description}</p>
+                    <div class="flex space-x-4">
+                        <button id="playMovieButton" class="bg-red-600 hover:bg-red-700 text-white font-bold py-3 px-6 rounded-md text-lg flex items-center transform hover:scale-105 transition-transform duration-200 ease-in-out">
+                            <svg class="w-6 h-6 mr-2" fill="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                <path d="M8 5v14l11-7z"></path>
+                            </svg>
+                            Assistir
+                        </button>
+                    </div>
+                </div>
+            `;
+
+            videoPlayerContainer.innerHTML = ''; // Limpa o container do player
+            videoPlayerContainer.classList.add('hidden'); // Esconde o container do player
+
+            document.getElementById('playMovieButton').addEventListener('click', () => {
+                movieDetailsContent.classList.add('hidden');
+                videoPlayerContainer.classList.remove('hidden');
+
+                if (movie.linkType === 'direct') {
+                    const videoElement = document.createElement('video');
+                    videoElement.id = 'videoPlayer';
+                    videoElement.controls = true;
+                    videoElement.classList.add('w-full', 'h-auto', 'rounded-lg');
+                    videoElement.src = movie.contentLink;
+                    videoElement.load();
+                    videoElement.play();
+                    videoPlayerContainer.appendChild(videoElement);
+                } else if (movie.linkType === 'embed') {
+                    const iframeElement = document.createElement('iframe');
+                    iframeElement.id = 'videoEmbedPlayer';
+                    iframeElement.setAttribute('src', movie.contentLink);
+                    iframeElement.setAttribute('allowfullscreen', '');
+                    iframeElement.classList.add('w-full', 'h-full', 'rounded-lg');
+                    videoPlayerContainer.appendChild(iframeElement);
+                } else if (movie.linkType === 'magnet') {
+                    showMessageModal('Abrir Link Magnet', 'Você será redirecionado para o link magnet. Certifique-se de ter um cliente BitTorrent instalado.', false);
+                    window.open(movie.contentLink, '_blank');
+                    movieDetailsModal.classList.add('hidden'); // Fecha o modal após abrir o link magnet
+                }
+            });
+
+            movieDetailsModal.classList.remove('hidden');
+            movieDetailsModal.focus(); // Foca no modal para permitir navegação por teclado (se aplicável dentro do modal)
+            currentFocusedMovieIndex = index; // Atualiza o índice do filme focado
+        }
+
+        /**
+         * Adiciona ou edita um filme.
+         * @param {Event} e - Evento de submit do formulário.
+         */
+        addMovieForm.addEventListener('submit', (e) => {
+            e.preventDefault();
+            const title = movieTitleInput.value;
+            const description = movieDescriptionInput.value;
+            let image = movieImageInput.value;
+            const linkType = linkTypeSelect.value;
+            const contentLink = contentLinkInput.value;
+
+            // Fallback para imagem placeholder se a URL da imagem estiver vazia
+            if (!image) {
+                image = `https://placehold.co/300x450/000000/FFFFFF?text=${encodeURIComponent(title)}`;
+            }
+
+            const newMovie = { title, description, image, linkType, contentLink };
+
+            const editingIndex = addMovieForm.dataset.editingIndex;
+            if (editingIndex !== undefined && editingIndex !== '') {
+                // Modo de edição
+                movies[parseInt(editingIndex)] = newMovie;
+                showMessageModal('Sucesso', 'Filme atualizado com sucesso!', false);
+                delete addMovieForm.dataset.editingIndex; // Limpa o estado de edição
+            } else {
+                // Modo de adição
+                movies.push(newMovie);
+                showMessageModal('Sucesso', 'Filme adicionado com sucesso!', false);
+            }
+
+            saveMovies();
+            renderMovies();
+            renderRegisteredMovies();
+            addMovieForm.reset(); // Limpa o formulário
+            tmdbSearchResults.classList.add('hidden'); // Esconde resultados do TMDB
+        });
+
+        /**
+         * Preenche o formulário para edição de um filme.
+         * @param {number} index - Índice do filme a ser editado.
+         */
+        function editMovie(index) {
+            const movie = movies[index];
+            movieTitleInput.value = movie.title;
+            movieDescriptionInput.value = movie.description;
+            movieImageInput.value = movie.image;
+            linkTypeSelect.value = movie.linkType;
+            contentLinkInput.value = movie.contentLink;
+            addMovieForm.dataset.editingIndex = index; // Armazena o índice do filme que está sendo editado
+            document.querySelector('#addMovieForm button[type="submit"]').textContent = 'Salvar Alterações';
+            controlPanelModal.scrollTo({ top: 0, behavior: 'smooth' }); // Rola para o topo do formulário
+            tmdbSearchResults.classList.add('hidden'); // Esconde resultados do TMDB
+        }
+
+        /**
+         * Exclui um filme da lista.
+         * @param {number} index - Índice do filme a ser excluído.
+         */
+        function deleteMovie(index) {
+            movies.splice(index, 1); // Remove o filme do array
+            saveMovies(); // Salva as alterações
+            renderMovies(); // Atualiza a exibição na tela principal
+            renderRegisteredMovies(); // Atualiza a exibição no painel de controle
+            showMessageModal('Sucesso', 'Filme excluído com sucesso!', false);
+        }
+
+        // --- Lógica de Login ---
+        loginForm.addEventListener('submit', (e) => {
+            e.preventDefault();
+            const username = document.getElementById('username').value;
+            const password = document.getElementById('password').value;
+
+            if (username === ADMIN_USERNAME && password === ADMIN_PASSWORD) {
+                localStorage.setItem('isAuthenticated', 'true');
+                loginScreen.classList.add('hidden');
+                mainContent.classList.remove('hidden');
+                loadMovies();
+                renderMovies();
+                // Foca no primeiro filme após o login para navegação por teclado
+                setTimeout(() => {
+                    if (moviesContainer.children.length > 0) {
+                        moviesContainer.children[0].focus();
+                    }
+                }, 100); // Pequeno atraso para garantir que os elementos estejam renderizados
+            } else {
+                loginMessage.textContent = 'Usuário ou senha inválidos.';
+                loginMessage.classList.remove('hidden');
+            }
+        });
+
+        // --- Lógica do Menu de Usuário ---
+        userMenuButton.addEventListener('click', () => {
+            userMenu.classList.toggle('hidden');
+        });
+
+        // Fecha o menu se clicar fora
+        document.addEventListener('click', (e) => {
+            if (!userMenuButton.contains(e.target) && !userMenu.contains(e.target)) {
+                userMenu.classList.add('hidden');
+            }
+        });
+
+        logoutButton.addEventListener('click', async () => {
+            const confirmed = await showMessageModal('Confirmação', 'Tem certeza que deseja sair?', true);
+            if (confirmed) {
+                localStorage.removeItem('isAuthenticated');
+                loginScreen.classList.remove('hidden');
+                mainContent.classList.add('hidden');
+                userMenu.classList.add('hidden'); // Fecha o menu
+                loginMessage.classList.add('hidden'); // Esconde mensagem de erro do login
+                loginForm.reset(); // Limpa o formulário de login
+            }
+        });
+
+        // --- Lógica do Painel de Controle ---
+        openControlPanelButton.addEventListener('click', () => {
+            controlPanelModal.classList.remove('hidden');
+            renderRegisteredMovies();
+            document.querySelector('#addMovieForm button[type="submit"]').textContent = 'Adicionar Filme'; // Reseta o texto do botão
+            delete addMovieForm.dataset.editingIndex; // Garante que não está em modo de edição ao abrir
+            addMovieForm.reset(); // Limpa o formulário ao abrir
+            tmdbSearchResults.classList.add('hidden'); // Esconde resultados do TMDB
+        });
+
+        closeControlPanelButton.addEventListener('click', () => {
+            controlPanelModal.classList.add('hidden');
+        });
+
+        // --- Lógica do Modal de Detalhes do Filme / Player ---
+        closeMovieDetailsModalButton.addEventListener('click', () => {
+            movieDetailsModal.classList.add('hidden');
+            // Pausa e limpa o player (se for vídeo) ou remove o iframe (se for embed)
+            const currentPlayer = videoPlayerContainer.querySelector('video, iframe');
+            if (currentPlayer && currentPlayer.tagName === 'VIDEO') {
+                currentPlayer.pause();
+                currentPlayer.src = '';
+            }
+            videoPlayerContainer.innerHTML = ''; // Remove qualquer elemento de player
+            videoPlayerContainer.classList.add('hidden'); // Esconde o container do player
+
+            // Retorna o foco para o card do filme que foi clicado, se existir
+            if (currentFocusedMovieIndex !== -1 && moviesContainer.children[currentFocusedMovieIndex]) {
+                moviesContainer.children[currentFocusedMovieIndex].focus();
+            }
+        });
+
+        // --- Navegação por Setas e Janelas Flutuantes ---
+        document.addEventListener('keydown', (e) => {
+            // Verifica se o foco está dentro de um input ou textarea para não interferir na digitação
+            if (document.activeElement.tagName === 'INPUT' || document.activeElement.tagName === 'TEXTAREA') {
+                return;
+            }
+
+            if (mainContent.classList.contains('hidden') || (!movieDetailsModal.classList.contains('hidden') && videoPlayerContainer.classList.contains('hidden')) || !controlPanelModal.classList.contains('hidden')) {
+                // Permite navegação por teclado na tela principal apenas se nenhum modal estiver ativo
+                // Ou se o modal de detalhes estiver aberto mas o player não
+                // Ou se o painel de controle estiver aberto (para navegar dentro dele, se implementado)
+                // A navegação de setas é primariamente para os cards de filmes.
+                if (controlPanelModal.classList.contains('hidden') && movieDetailsModal.classList.contains('hidden')) {
+                    const movieCards = Array.from(moviesContainer.children);
+                    if (movieCards.length === 0) return;
+
+                    let nextIndex = currentFocusedMovieIndex;
+                    const numCols = Math.floor(moviesContainer.offsetWidth / (movieCards[0].offsetWidth + (parseFloat(getComputedStyle(moviesContainer).gap) || 0))); // Calcula número de colunas dinamicamente
+
+                    switch (e.key) {
+                        case 'ArrowRight':
+                            e.preventDefault(); // Impede o scroll da página
+                            nextIndex = (currentFocusedMovieIndex + 1) % movieCards.length;
+                            break;
+                        case 'ArrowLeft':
+                            e.preventDefault();
+                            nextIndex = (currentFocusedMovieIndex - 1 + movieCards.length) % movieCards.length;
+                            break;
+                        case 'ArrowDown':
+                            e.preventDefault();
+                            if (numCols > 0) {
+                                nextIndex = (currentFocusedMovieIndex + numCols);
+                                if (nextIndex >= movieCards.length) {
+                                     // Se ultrapassar o final, tenta ir para o último item da linha seguinte ou para o último item total
+                                    const lastRowStart = Math.floor((movieCards.length - 1) / numCols) * numCols;
+                                    nextIndex = Math.min(movieCards.length -1, lastRowStart + (currentFocusedMovieIndex % numCols));
+                                }
+                            } else { // Se não há colunas (mobile), apenas vai para o próximo
+                                nextIndex = (currentFocusedMovieIndex + 1) % movieCards.length;
+                            }
+                            break;
+                        case 'ArrowUp':
+                            e.preventDefault();
+                            if (numCols > 0) {
+                                nextIndex = (currentFocusedMovieIndex - numCols);
+                                if (nextIndex < 0) {
+                                    // Se for para cima do início, tenta ir para o primeiro item da linha anterior ou para o primeiro item total
+                                    const firstRowEnd = numCols -1;
+                                    nextIndex = Math.max(0, firstRowEnd - (numCols - 1 - (currentFocusedMovieIndex % numCols)));
+                                }
+                            } else { // Se não há colunas (mobile), apenas vai para o anterior
+                                nextIndex = (currentFocusedMovieIndex - 1 + movieCards.length) % movieCards.length;
+                            }
+                            break;
+                        case 'Enter':
+                            e.preventDefault();
+                            if (currentFocusedMovieIndex !== -1) {
+                                movieCards[currentFocusedMovieIndex].click(); // Simula o clique para abrir o modal de detalhes
+                            }
+                            break;
+                    }
+
+                    // Garante que o índice está dentro dos limites
+                    nextIndex = Math.max(0, Math.min(nextIndex, movieCards.length - 1));
+
+                    if (nextIndex !== currentFocusedMovieIndex && movieCards[nextIndex]) {
+                        movieCards[nextIndex].focus(); // Move o foco para o próximo filme
+                        currentFocusedMovieIndex = nextIndex;
+                    }
+                }
+            }
+
+            // Lógica de Escape para fechar modais
+            if (e.key === 'Escape') {
+                e.preventDefault();
+                if (!movieDetailsModal.classList.contains('hidden')) {
+                    closeMovieDetailsModalButton.click(); // Fecha o modal de detalhes
+                } else if (!controlPanelModal.classList.contains('hidden')) {
+                    closeControlPanelButton.click(); // Fecha o painel de controle
+                } else if (!messageModal.classList.contains('hidden')) {
+                    messageCancelButton.click(); // Fecha o modal de mensagem
+                }
+            }
+        });
+
+
+        // --- Lógica de Busca TMDB ---
+        searchTmdbButton.addEventListener('click', async () => {
+            const query = tmdbSearchInput.value.trim();
+            if (!query) {
+                showMessageModal('Atenção', 'Por favor, digite um título de filme para buscar no TMDB.', false);
+                return;
+            }
+
+            try {
+                const response = await fetch(`${TMDB_BASE_URL}/search/movie?api_key=${TMDB_API_KEY}&query=${encodeURIComponent(query)}&language=pt-BR`);
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                const data = await response.json();
+
+                tmdbSearchResults.innerHTML = ''; // Limpa resultados anteriores
+                if (data.results && data.results.length > 0) {
+                    tmdbSearchResults.classList.remove('hidden');
+                    data.results.slice(0, 5).forEach(movie => { // Limita a 5 resultados para não poluir
+                        const resultItem = document.createElement('div');
+                        resultItem.classList.add('p-2', 'cursor-pointer', 'hover:bg-gray-600', 'border-b', 'border-gray-600', 'last:border-b-0');
+                        resultItem.innerHTML = `
+                            <p class="font-semibold">${movie.title} (${movie.release_date ? movie.release_date.substring(0, 4) : 'N/A'})</p>
+                            <p class="text-xs text-gray-400">${movie.overview ? movie.overview.substring(0, 100) + '...' : 'Sem descrição.'}</p>
+                        `;
+                        resultItem.addEventListener('click', () => {
+                            movieTitleInput.value = movie.title;
+                            movieDescriptionInput.value = movie.overview || 'N/A';
+                            movieImageInput.value = movie.poster_path ? `${TMDB_IMAGE_BASE_URL}${movie.poster_path}` : 'https://placehold.co/300x450/000000/FFFFFF?text=Poster+Não+Disponível';
+                            tmdbSearchResults.classList.add('hidden'); // Esconde os resultados
+                        });
+                        tmdbSearchResults.appendChild(resultItem);
+                    });
+                } else {
+                    showMessageModal('Atenção', 'Nenhum resultado encontrado no TMDB para esta busca.', false);
+                    tmdbSearchResults.classList.add('hidden');
+                }
+            } catch (error) {
+                console.error('Erro ao buscar filme no TMDB:', error);
+                showMessageModal('Erro', 'Ocorreu um erro ao buscar o filme no TMDB. Tente novamente mais tarde.', false);
+                tmdbSearchResults.classList.add('hidden');
+            }
+        });
+
+        // Esconde os resultados do TMDB quando clicar fora
+        document.addEventListener('click', (e) => {
+            if (!tmdbSearchResults.contains(e.target) && !tmdbSearchInput.contains(e.target) && !searchTmdbButton.contains(e.target)) {
+                tmdbSearchResults.classList.add('hidden');
+            }
+        });
+
+
+        // --- Inicialização ---
+        window.onload = () => {
+            // Verifica se o usuário já está autenticado
+            if (localStorage.getItem('isAuthenticated') === 'true') {
+                loginScreen.classList.add('hidden');
+                mainContent.classList.remove('hidden');
+                loadMovies();
+                renderMovies();
+                // Foca no primeiro filme ao carregar se já estiver logado
+                setTimeout(() => {
+                    if (moviesContainer.children.length > 0) {
+                        moviesContainer.children[0].focus();
+                    }
+                }, 100);
+            } else {
+                loginScreen.classList.remove('hidden');
+                mainContent.classList.add('hidden');
+            }
+        };
+
+        // Redimensionamento para recalcular colunas de navegação
+        window.addEventListener('resize', () => {
+            // Se um item está focado e as colunas mudaram, o foco pode precisar ser ajustado
+            if (currentFocusedMovieIndex !== -1 && moviesContainer.children[currentFocusedMovieIndex]) {
+                moviesContainer.children[currentFocusedMovieIndex].focus();
+            }
+        });
+
+    </script>
+</body>
+</html>
