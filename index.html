@@ -80,6 +80,7 @@
                     <a href="#" id="logoutButton" class="block px-4 py-2 text-sm text-gray-200 hover:bg-gray-600">Sair</a>
                 </div>
             </div>
+            <p id="currentUserId" class="text-sm text-gray-400 ml-4 hidden md:block">ID de Usuário: </p>
         </header>
 
         <!-- Seção de Destaque (Hero) -->
@@ -199,7 +200,12 @@
     </div>
 
 
-    <script>
+    <script type="module">
+        // Importações do Firebase
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+        import { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getFirestore, collection, doc, addDoc, setDoc, updateDoc, deleteDoc, onSnapshot, query } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+
         // Variáveis de elementos DOM
         const loginScreen = document.getElementById('loginScreen');
         const loginForm = document.getElementById('loginForm');
@@ -220,6 +226,8 @@
         const videoPlayerContainer = document.getElementById('videoPlayerContainer');
         const noMoviesMessage = document.getElementById('noMoviesMessage');
         const noRegisteredMoviesMessage = document.getElementById('noRegisteredMoviesMessage');
+        const currentUserIdDisplay = document.getElementById('currentUserId');
+
 
         // Novas variáveis para TMDB e Link Type
         const tmdbSearchInput = document.getElementById('tmdbSearch');
@@ -248,8 +256,12 @@
         const TMDB_BASE_URL = 'https://api.themoviedb.org/3';
         const TMDB_IMAGE_BASE_URL = 'https://image.tmdb.org/t/p/w500';
 
-        // Variável para armazenar a lista de filmes
-        let movies = [];
+        // Variáveis Firebase
+        let app;
+        let db;
+        let auth;
+        let currentUserId = 'anonymous'; // Inicializa com um valor padrão
+        let movies = []; // Variável para armazenar a lista de filmes do Firestore
         let currentFocusedMovieIndex = -1; // Índice do filme atualmente focado para navegação por teclado
 
         /**
@@ -288,20 +300,32 @@
         }
 
         /**
-         * Salva a lista de filmes no localStorage.
+         * Configura os listeners do Firestore para os filmes.
          */
-        function saveMovies() {
-            localStorage.setItem('streamflixMovies', JSON.stringify(movies));
-        }
-
-        /**
-         * Carrega a lista de filmes do localStorage.
-         */
-        function loadMovies() {
-            const storedMovies = localStorage.getItem('streamflixMovies');
-            if (storedMovies) {
-                movies = JSON.parse(storedMovies);
+        function setupFirestoreListeners() {
+            if (!db || !currentUserId) {
+                console.error("Firestore ou User ID não estão prontos.");
+                return;
             }
+
+            // Path para a coleção de filmes privados do usuário
+            const moviesCollectionRef = collection(db, `artifacts/${__app_id}/users/${currentUserId}/movies`);
+            const q = query(moviesCollectionRef);
+
+            // onSnapshot para receber atualizações em tempo real
+            onSnapshot(q, (snapshot) => {
+                const updatedMovies = [];
+                snapshot.forEach(doc => {
+                    updatedMovies.push({ id: doc.id, ...doc.data() });
+                });
+                movies = updatedMovies; // Atualiza a lista de filmes global
+                renderMovies(); // Renderiza na tela principal
+                renderRegisteredMovies(); // Renderiza no painel de controle
+                console.log("Filmes atualizados do Firestore:", movies);
+            }, (error) => {
+                console.error("Erro ao obter filmes do Firestore:", error);
+                showMessageModal('Erro de Sincronização', 'Ocorreu um erro ao carregar os filmes. Por favor, tente recarregar a página.', false);
+            });
         }
 
         /**
@@ -321,6 +345,7 @@
                 movieCard.classList.add('bg-gray-800', 'rounded-lg', 'shadow-lg', 'overflow-hidden', 'cursor-pointer', 'relative', 'group', 'transform', 'hover:scale-105', 'transition-transform', 'duration-200', 'ease-in-out', 'focus:outline-none', 'focus:ring-4', 'focus:ring-red-500', 'focus:ring-opacity-75');
                 movieCard.setAttribute('tabindex', '0'); // Torna o elemento focável
                 movieCard.dataset.index = index; // Adiciona o índice para navegação por teclado
+                movieCard.dataset.movieId = movie.id; // Armazena o ID do Firestore
 
                 movieCard.innerHTML = `
                     <img src="${movie.image}" alt="${movie.title}" class="w-full h-56 object-cover">
@@ -337,7 +362,6 @@
                 movieCard.addEventListener('click', () => showMovieDetails(movie, index));
                 movieCard.addEventListener('focus', () => {
                     currentFocusedMovieIndex = index;
-                    // Opcional: Adicionar algum destaque visual ao item focado
                     movieCard.classList.add('ring-4', 'ring-red-500', 'ring-opacity-75');
                 });
                 movieCard.addEventListener('blur', () => {
@@ -367,8 +391,8 @@
                         <h4 class="text-xl font-semibold text-gray-100">${movie.title}</h4>
                         <p class="text-gray-300 text-sm truncate">${movie.description}</p>
                     </div>
-                    <button class="edit-movie-button bg-blue-600 hover:bg-blue-700 text-white text-sm font-bold py-1 px-3 rounded-md transform hover:scale-105 transition-transform duration-200 ease-in-out" data-index="${index}">Editar</button>
-                    <button class="delete-movie-button bg-red-600 hover:bg-red-700 text-white text-sm font-bold py-1 px-3 rounded-md transform hover:scale-105 transition-transform duration-200 ease-in-out" data-index="${index}">Excluir</button>
+                    <button class="edit-movie-button bg-blue-600 hover:bg-blue-700 text-white text-sm font-bold py-1 px-3 rounded-md transform hover:scale-105 transition-transform duration-200 ease-in-out" data-id="${movie.id}" data-index="${index}">Editar</button>
+                    <button class="delete-movie-button bg-red-600 hover:bg-red-700 text-white text-sm font-bold py-1 px-3 rounded-md transform hover:scale-105 transition-transform duration-200 ease-in-out" data-id="${movie.id}" data-index="${index}">Excluir</button>
                 `;
                 registeredMoviesList.appendChild(movieItem);
             });
@@ -376,17 +400,19 @@
             // Adiciona listeners para os botões de edição e exclusão
             document.querySelectorAll('.edit-movie-button').forEach(button => {
                 button.addEventListener('click', (e) => {
-                    const index = parseInt(e.target.dataset.index);
-                    editMovie(index);
+                    const movieId = e.target.dataset.id;
+                    const movieIndex = parseInt(e.target.dataset.index);
+                    editMovie(movies[movieIndex], movieId);
                 });
             });
             document.querySelectorAll('.delete-movie-button').forEach(button => {
                 button.addEventListener('click', async (e) => {
-                    const index = parseInt(e.target.dataset.index);
-                    const movieTitleToDelete = movies[index].title;
+                    const movieId = e.target.dataset.id;
+                    const movieIndex = parseInt(e.target.dataset.index);
+                    const movieTitleToDelete = movies[movieIndex].title;
                     const confirmed = await showMessageModal('Confirmação', `Tem certeza que deseja excluir "${movieTitleToDelete}"?`, true);
                     if (confirmed) {
-                        deleteMovie(index);
+                        deleteMovie(movieId);
                     }
                 });
             });
@@ -452,10 +478,10 @@
         }
 
         /**
-         * Adiciona ou edita um filme.
+         * Adiciona ou edita um filme no Firestore.
          * @param {Event} e - Evento de submit do formulário.
          */
-        addMovieForm.addEventListener('submit', (e) => {
+        addMovieForm.addEventListener('submit', async (e) => {
             e.preventDefault();
             const title = movieTitleInput.value;
             const description = movieDescriptionInput.value;
@@ -468,54 +494,62 @@
                 image = `https://placehold.co/300x450/000000/FFFFFF?text=${encodeURIComponent(title)}`;
             }
 
-            const newMovie = { title, description, image, linkType, contentLink };
+            const movieData = { title, description, image, linkType, contentLink };
 
-            const editingIndex = addMovieForm.dataset.editingIndex;
-            if (editingIndex !== undefined && editingIndex !== '') {
-                // Modo de edição
-                movies[parseInt(editingIndex)] = newMovie;
-                showMessageModal('Sucesso', 'Filme atualizado com sucesso!', false);
-                delete addMovieForm.dataset.editingIndex; // Limpa o estado de edição
-            } else {
-                // Modo de adição
-                movies.push(newMovie);
-                showMessageModal('Sucesso', 'Filme adicionado com sucesso!', false);
+            try {
+                const editingId = addMovieForm.dataset.editingId;
+                if (editingId !== undefined && editingId !== '') {
+                    // Modo de edição
+                    const movieDocRef = doc(db, `artifacts/${__app_id}/users/${currentUserId}/movies`, editingId);
+                    await updateDoc(movieDocRef, movieData);
+                    showMessageModal('Sucesso', 'Filme atualizado com sucesso!', false);
+                    delete addMovieForm.dataset.editingId; // Limpa o estado de edição
+                } else {
+                    // Modo de adição
+                    const moviesCollectionRef = collection(db, `artifacts/${__app_id}/users/${currentUserId}/movies`);
+                    await addDoc(moviesCollectionRef, movieData);
+                    showMessageModal('Sucesso', 'Filme adicionado com sucesso!', false);
+                }
+            } catch (error) {
+                console.error("Erro ao salvar filme no Firestore:", error);
+                showMessageModal('Erro', 'Ocorreu um erro ao salvar o filme. Por favor, tente novamente.', false);
             }
 
-            saveMovies();
-            renderMovies();
-            renderRegisteredMovies();
             addMovieForm.reset(); // Limpa o formulário
             tmdbSearchResults.classList.add('hidden'); // Esconde resultados do TMDB
+            document.querySelector('#addMovieForm button[type="submit"]').textContent = 'Adicionar Filme'; // Reseta o texto do botão
         });
 
         /**
          * Preenche o formulário para edição de um filme.
-         * @param {number} index - Índice do filme a ser editado.
+         * @param {object} movie - O objeto filme (com o ID do Firestore).
+         * @param {string} movieId - O ID do documento no Firestore.
          */
-        function editMovie(index) {
-            const movie = movies[index];
+        function editMovie(movie, movieId) {
             movieTitleInput.value = movie.title;
             movieDescriptionInput.value = movie.description;
             movieImageInput.value = movie.image;
             linkTypeSelect.value = movie.linkType;
             contentLinkInput.value = movie.contentLink;
-            addMovieForm.dataset.editingIndex = index; // Armazena o índice do filme que está sendo editado
+            addMovieForm.dataset.editingId = movieId; // Armazena o ID do filme que está sendo editado
             document.querySelector('#addMovieForm button[type="submit"]').textContent = 'Salvar Alterações';
             controlPanelModal.scrollTo({ top: 0, behavior: 'smooth' }); // Rola para o topo do formulário
             tmdbSearchResults.classList.add('hidden'); // Esconde resultados do TMDB
         }
 
         /**
-         * Exclui um filme da lista.
-         * @param {number} index - Índice do filme a ser excluído.
+         * Exclui um filme do Firestore.
+         * @param {string} movieId - ID do documento do filme no Firestore.
          */
-        function deleteMovie(index) {
-            movies.splice(index, 1); // Remove o filme do array
-            saveMovies(); // Salva as alterações
-            renderMovies(); // Atualiza a exibição na tela principal
-            renderRegisteredMovies(); // Atualiza a exibição no painel de controle
-            showMessageModal('Sucesso', 'Filme excluído com sucesso!', false);
+        async function deleteMovie(movieId) {
+            try {
+                const movieDocRef = doc(db, `artifacts/${__app_id}/users/${currentUserId}/movies`, movieId);
+                await deleteDoc(movieDocRef);
+                showMessageModal('Sucesso', 'Filme excluído com sucesso!', false);
+            } catch (error) {
+                console.error("Erro ao excluir filme do Firestore:", error);
+                showMessageModal('Erro', 'Ocorreu um erro ao excluir o filme. Por favor, tente novamente.', false);
+            }
         }
 
         // --- Lógica de Login ---
@@ -528,14 +562,14 @@
                 localStorage.setItem('isAuthenticated', 'true');
                 loginScreen.classList.add('hidden');
                 mainContent.classList.remove('hidden');
-                loadMovies();
-                renderMovies();
+                // Como os filmes são carregados via onSnapshot, não precisamos chamar renderMovies aqui.
+                // Eles serão carregados quando o Firebase for inicializado e o user ID for definido.
                 // Foca no primeiro filme após o login para navegação por teclado
                 setTimeout(() => {
                     if (moviesContainer.children.length > 0) {
                         moviesContainer.children[0].focus();
                     }
-                }, 100); // Pequeno atraso para garantir que os elementos estejam renderizados
+                }, 100);
             } else {
                 loginMessage.textContent = 'Usuário ou senha inválidos.';
                 loginMessage.classList.remove('hidden');
@@ -569,9 +603,9 @@
         // --- Lógica do Painel de Controle ---
         openControlPanelButton.addEventListener('click', () => {
             controlPanelModal.classList.remove('hidden');
-            renderRegisteredMovies();
+            renderRegisteredMovies(); // Garante que a lista esteja atualizada ao abrir
             document.querySelector('#addMovieForm button[type="submit"]').textContent = 'Adicionar Filme'; // Reseta o texto do botão
-            delete addMovieForm.dataset.editingIndex; // Garante que não está em modo de edição ao abrir
+            delete addMovieForm.dataset.editingId; // Garante que não está em modo de edição ao abrir
             addMovieForm.reset(); // Limpa o formulário ao abrir
             tmdbSearchResults.classList.add('hidden'); // Esconde resultados do TMDB
         });
@@ -736,23 +770,69 @@
         });
 
 
-        // --- Inicialização ---
-        window.onload = () => {
-            // Verifica se o usuário já está autenticado
-            if (localStorage.getItem('isAuthenticated') === 'true') {
-                loginScreen.classList.add('hidden');
-                mainContent.classList.remove('hidden');
-                loadMovies();
-                renderMovies();
-                // Foca no primeiro filme ao carregar se já estiver logado
-                setTimeout(() => {
-                    if (moviesContainer.children.length > 0) {
-                        moviesContainer.children[0].focus();
+        // --- Inicialização do Firebase e Autenticação ---
+        async function initializeFirebaseAndAuth() {
+            try {
+                // Variáveis globais fornecidas pelo ambiente Canvas
+                const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
+                const firebaseConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : {};
+                const initialAuthToken = typeof __initial_auth_token !== 'undefined' ? __initial_auth_token : null;
+
+                app = initializeApp(firebaseConfig);
+                db = getFirestore(app);
+                auth = getAuth(app);
+
+                // Listener para o estado de autenticação
+                onAuthStateChanged(auth, (user) => {
+                    if (user) {
+                        currentUserId = user.uid;
+                        currentUserIdDisplay.textContent = `ID de Usuário: ${currentUserId}`;
+                        currentUserIdDisplay.classList.remove('hidden');
+                        console.log("Usuário autenticado:", currentUserId);
+                        // Configura os listeners do Firestore apenas após a autenticação
+                        setupFirestoreListeners();
+                        if (localStorage.getItem('isAuthenticated') === 'true') {
+                             mainContent.classList.remove('hidden'); // Exibe o conteúdo principal se já logado
+                        }
+                    } else {
+                        currentUserId = 'anonymous'; // Fallback para anônimo se não houver user.uid
+                        currentUserIdDisplay.textContent = `ID de Usuário: ${currentUserId}`;
+                        currentUserIdDisplay.classList.remove('hidden');
+                        console.log("Usuário não autenticado ou anônimo.");
+                        // Se não há usuário logado e não há token, tenta login anônimo
+                        if (!initialAuthToken) {
+                            signInAnonymously(auth).catch((error) => {
+                                console.error("Erro ao autenticar anonimamente:", error);
+                                showMessageModal('Erro de Autenticação', 'Não foi possível conectar ao serviço de autenticação. Tente novamente.', false);
+                            });
+                        }
                     }
-                }, 100);
+                });
+
+                // Tenta autenticar com o token inicial fornecido pelo ambiente
+                if (initialAuthToken) {
+                    await signInWithCustomToken(auth, initialAuthToken);
+                    console.log("Autenticado com token customizado.");
+                } else {
+                    // Se não houver token, tenta autenticar anonimamente (Firebas Auth Rule permite read/write se request.auth != null)
+                    await signInAnonymously(auth);
+                    console.log("Autenticado anonimamente.");
+                }
+
+            } catch (error) {
+                console.error("Erro na inicialização do Firebase ou autenticação:", error);
+                showMessageModal('Erro de Inicialização', 'Não foi possível inicializar o aplicativo. Verifique sua conexão.', false);
+            }
+        }
+
+        // --- Inicialização da Aplicação ---
+        window.onload = () => {
+            initializeFirebaseAndAuth(); // Inicia o Firebase e a autenticação
+            // A visibilidade da tela de login/conteúdo principal será controlada após a autenticação
+            if (localStorage.getItem('isAuthenticated') === 'true') {
+                 loginScreen.classList.add('hidden'); // Esconde login se já autenticado
             } else {
-                loginScreen.classList.remove('hidden');
-                mainContent.classList.add('hidden');
+                 loginScreen.classList.remove('hidden'); // Mostra login se não autenticado
             }
         };
 
