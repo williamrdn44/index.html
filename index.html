@@ -304,7 +304,7 @@
          */
         function setupFirestoreListeners() {
             if (!db || !currentUserId) {
-                console.error("Firestore ou User ID não estão prontos.");
+                console.error("Firestore ou User ID não estão prontos para configurar listeners.");
                 return;
             }
 
@@ -323,7 +323,7 @@
                 renderRegisteredMovies(); // Renderiza no painel de controle
                 console.log("Filmes atualizados do Firestore:", movies);
             }, (error) => {
-                console.error("Erro ao obter filmes do Firestore:", error);
+                console.error("Erro ao obter filmes do Firestore via onSnapshot:", error);
                 showMessageModal('Erro de Sincronização', 'Ocorreu um erro ao carregar os filmes. Por favor, tente recarregar a página.', false);
             });
         }
@@ -775,12 +775,31 @@
             try {
                 // Variáveis globais fornecidas pelo ambiente Canvas
                 const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
-                const firebaseConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : {};
+                let firebaseConfig = {};
+
+                // Tenta fazer o parse da configuração do Firebase de forma segura
+                if (typeof __firebase_config !== 'undefined' && __firebase_config) {
+                    try {
+                        firebaseConfig = JSON.parse(__firebase_config);
+                        console.log("Firebase Config carregada:", firebaseConfig);
+                    } catch (e) {
+                        console.error("Erro ao fazer parse de __firebase_config:", e);
+                        showMessageModal('Erro de Configuração', `A configuração do Firebase é inválida: ${e.message}. Verifique a console para detalhes.`, false);
+                        return; // Impede a execução se a configuração for inválida
+                    }
+                } else {
+                    console.warn("Variável __firebase_config não definida ou vazia. Usando configuração padrão.");
+                }
+
                 const initialAuthToken = typeof __initial_auth_token !== 'undefined' ? __initial_auth_token : null;
 
+                // Inicializa o aplicativo Firebase
                 app = initializeApp(firebaseConfig);
+                console.log("Firebase App inicializado com sucesso.");
+
                 db = getFirestore(app);
                 auth = getAuth(app);
+                console.log("Firebase Firestore e Auth serviços inicializados.");
 
                 // Listener para o estado de autenticação
                 onAuthStateChanged(auth, (user) => {
@@ -788,7 +807,7 @@
                         currentUserId = user.uid;
                         currentUserIdDisplay.textContent = `ID de Usuário: ${currentUserId}`;
                         currentUserIdDisplay.classList.remove('hidden');
-                        console.log("Usuário autenticado:", currentUserId);
+                        console.log("Usuário autenticado (onAuthStateChanged):", currentUserId);
                         // Configura os listeners do Firestore apenas após a autenticação
                         setupFirestoreListeners();
                         if (localStorage.getItem('isAuthenticated') === 'true') {
@@ -798,30 +817,29 @@
                         currentUserId = 'anonymous'; // Fallback para anônimo se não houver user.uid
                         currentUserIdDisplay.textContent = `ID de Usuário: ${currentUserId}`;
                         currentUserIdDisplay.classList.remove('hidden');
-                        console.log("Usuário não autenticado ou anônimo.");
+                        console.log("Usuário não autenticado ou anônimo (onAuthStateChanged).");
                         // Se não há usuário logado e não há token, tenta login anônimo
                         if (!initialAuthToken) {
                             signInAnonymously(auth).catch((error) => {
-                                console.error("Erro ao autenticar anonimamente:", error);
+                                console.error("Erro ao autenticar anonimamente (onAuthStateChanged fallback):", error);
                                 showMessageModal('Erro de Autenticação', 'Não foi possível conectar ao serviço de autenticação. Tente novamente.', false);
                             });
                         }
                     }
                 });
 
-                // Tenta autenticar com o token inicial fornecido pelo ambiente
+                // Tenta autenticar com o token inicial fornecido pelo ambiente ou anonimamente
                 if (initialAuthToken) {
                     await signInWithCustomToken(auth, initialAuthToken);
-                    console.log("Autenticado com token customizado.");
+                    console.log("Autenticado com token customizado (inicial).");
                 } else {
-                    // Se não houver token, tenta autenticar anonimamente (Firebas Auth Rule permite read/write se request.auth != null)
                     await signInAnonymously(auth);
-                    console.log("Autenticado anonimamente.");
+                    console.log("Autenticado anonimamente (inicial).");
                 }
 
             } catch (error) {
-                console.error("Erro na inicialização do Firebase ou autenticação:", error);
-                showMessageModal('Erro de Inicialização', 'Não foi possível inicializar o aplicativo. Verifique sua conexão.', false);
+                console.error("Erro fatal na inicialização do Firebase ou autenticação:", error);
+                showMessageModal('Erro de Inicialização', `Erro ao iniciar aplicativo: ${error.message || 'Detalhes desconhecidos'}. Por favor, verifique a console do navegador para mais informações.`, false);
             }
         }
 
